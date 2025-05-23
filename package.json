@@ -22,7 +22,7 @@
   "license": "proprietary",
   "private": true,
   "dependencies": {
-    "@bonniernews/exp-logger": "^3.0.0",
+    "@bonniernews/exp-logger": "^4.1.0",
     "exp-config": "^4.2.1",
     "exp-correlator": "^1.0.0",
     "express": "^4.18.2",
