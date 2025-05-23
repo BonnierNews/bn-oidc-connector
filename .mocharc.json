@@ -3,7 +3,7 @@
   "reporter": "spec",
   "recursive": true,
   "ui": "mocha-cakes-2",
-  "require": ["./test/helpers/setup.ts"],
+  "require": ["./test/setup.ts"],
   "exit": true,
   "extension": ["ts"],
   "node-option": [

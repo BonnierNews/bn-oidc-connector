@@ -107,7 +107,7 @@ tmp/ - everything in here is ignored, put your own one off experiments here
 ## Files
 README.md - see below
 package.json - define dependencies etc.
-app.js - start the service in a single process
+index.js - start the service in a single process
 ```
 
 ### Readme
@@ -193,7 +193,7 @@ Tests should be deterministic, fast and full stack. Static code analysis and cod
 To make the application possible to test with [supertest][6] you need to export the application from the main file:
 
 ```javascript
-// In app.js
+// In index.js
 var express = require("express");
 var app = express();
 

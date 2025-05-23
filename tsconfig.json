@@ -1,21 +1,11 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@bonniernews/tsconfig",
   "compilerOptions": {
-    "rootDir": "./",
-    "typeRoots": [
-      "@types",
-      "node_modules/@types"
-    ],
-    "types": [
-      "mocha",
-      "chai"
-    ],
-    "outDir": "./dist",
+    "noEmit": true,
+    "moduleResolution": "bundler",
+    "rootDir": ".",
+    "types": ["node", "chai", "@bonniernews/node-test-bdd"]
   },
-  "include": [
-    "lib",
-    "@types",
-    "app.ts",
-    "test"
-  ]
+  "include": ["lib", "@types", "index.ts", "test"]
 }

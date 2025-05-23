@@ -1,6 +1,0 @@
-{
-  "logLevel": "info",
-
-  "viewCaching": true,
-  "sentryDsn": ""
-}
