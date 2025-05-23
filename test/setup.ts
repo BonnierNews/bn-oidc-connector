@@ -12,7 +12,11 @@ process.env.NODE_ENV = "test";
 chai.config.truncateThreshold = 0;
 chai.config.includeStack = true;
 
-beforeEachScenario(nock.disableNetConnect);
+beforeEachScenario(() => {
+  nock.disableNetConnect();
+  nock.enableNetConnect(/(localhost|127\.0\.0\.1):\d+/);
+});
+
 afterEachScenario(() => {
   if (nock.pendingMocks().length > 0) {
     const error = `There are pending mocks after test is done: ${JSON.stringify(nock.pendingMocks(), null, 2)}`;

@@ -1,37 +1,20 @@
-import { RequestHandler } from "express";
+import { Router } from "express";
+import request from "supertest";
 
+import { createApp } from "../helpers/app-helper";
 import { middleware as createMiddleware } from "../../lib/middleware";
 
 Feature("visiting the application", () => {
-  let middleware: RequestHandler;
-
-  beforeEachScenario(() => {
-    middleware = createMiddleware();
-  });
+  const app = createApp();
+  const middleware: Router = createMiddleware({ clientId: "test-client-id" });
+  app.use(middleware);
 
   Scenario("Visiting /", () => {
-    When("Middleware will execute callback", () => {
-      const cb = () => {
-        // eslint-disable-next-line no-console
-        console.log("Middleware called");
-      };
+    When("Middleware will execute callback", async () => {
+      const res = await request(app)
+        .post("/callback");
 
-      // Minimal mock of Express Request object
-      const req = {
-        header: () => "test",
-        get: () => "test",
-        accepts: () => true,
-        acceptsCharsets: () => true,
-        acceptsEncodings: () => true,
-        acceptsLanguages: () => true,
-        // Add any other required properties/methods as needed
-      } as any;
-
-      // Minimal mock of Express Request object
-      const res = {} as any;
-
-      middleware(req, res, cb);
-      expect(true);
+      expect(res.status).to.equal(200);
     });
   });
 });

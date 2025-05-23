@@ -1,17 +1,23 @@
-import type { RequestHandler } from "express";
-
-export type Middleware = () => RequestHandler;
-
+import { Router as createRouter, type Router } from "express";
 /**
  * Express middleware to be used to connect to Bonnier OIDC provider and register reguired routes.
- *
- * Only logs that occur inside the request context will be decorated, and applications running
- * in GCP will get the appropriate log fields to show up correctly in the GCP Trace Explorer.
  */
-export const middleware: Middleware = () => {
-  return (_req, _res, next) => {
+
+interface ClientConfig {
+  clientId: string;
+}
+
+export const middleware = (clientConfig: ClientConfig): Router => {
+  const router = createRouter();
+  const { clientId } = clientConfig;
+  router.use((_req, _res, next) => {
     // do any required setup
-    // register routes
     return next();
-  };
+  });
+
+  router.post("/callback", (_req, res) => {
+    res.send(` Callback received for client ID: ${clientId}`);
+  });
+
+  return router;
 };
