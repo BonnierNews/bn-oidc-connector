@@ -34,4 +34,5 @@ app.get("/", async (req, res) => {
 The `middleware` should be put as early as possible, since only registers routes that will determine if user need to refresh...
 
 ### Config
+
 Example of `config` object
