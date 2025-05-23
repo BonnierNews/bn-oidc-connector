@@ -1,13 +1,31 @@
 {
-  "name": "nodestarterapp",
-  "version": "0.0.3",
-  "description": "Empty starter app for Bonnier News node backend apps",
+  "name": "@bonniernews/bn-oidc-connector",
+  "version": "0.0.1",
+  "description": "Express middleware for Bonnier News OIDC authentication",
   "type": "module",
   "main": "dist/index.js",
-  "homepage": "https://github.com/BonnierNews/node-starterapp",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "./dist"
+  ],
+  "exports": {
+    "import": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "require": {
+      "types": "./dist/index.d.cts",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "homepage": "https://github.com/BonnierNews/bn-oidc-connector#readme#readme",
   "repository": {
     "type": "git",
-    "url": "git@github.com:BonnierNews/node-starterapp.git"
+    "url": "git+https://github.com/BonnierNews/bn-oidc-connector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BonnierNews/bn-oidc-connector/issues"
   },
   "scripts": {
     "build": "tsup",
@@ -18,7 +36,7 @@
     "lint": "eslint . --cache && npm run typecheck"
   },
   "author": "Bonnier News AB",
-  "license": "proprietary",
+  "license": "MIT",
   "private": true,
   "dependencies": {
     "express": "^4.18.2",
