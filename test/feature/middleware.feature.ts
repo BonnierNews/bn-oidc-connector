@@ -7,13 +7,11 @@ import { middleware as createMiddleware } from "../../lib/middleware";
 
 const issuerBaseURL = "https://oidc.test";
 
-Feature("visiting the application", async () => {
-  const app = createApp();
-  const middleware: Router = await createMiddleware({ clientId: "test-client-id", issuerBaseURL });
-  app.use(middleware);
+Feature("visiting the application", () => {
 
   Scenario("Visiting /", () => {
-    Given("the application is running", () => {
+    let app: any;
+    Given("id-service returns oidc-config", () => {
       nock(issuerBaseURL)
         .get("/oauth/.well-known/openid-configuration")
         .reply(200, {
@@ -30,6 +28,12 @@ Feature("visiting the application", async () => {
           id_token_signing_alg_values_supported: [ "HS256", "RS256" ],
           ui_locales_supported: [ "da-DK", "en-US", "fi-FI", "nl-NL", "nb-NO", "sv-SE" ],
         });
+    });
+
+    And("the application is configured with a client ID and issuer base URL", async () => {
+      app = createApp();
+      const middleware: Router = await createMiddleware({ clientId: "test-client-id", issuerBaseURL });
+      app.use(middleware);
     });
 
     When("Middleware will execute callback", async () => {
