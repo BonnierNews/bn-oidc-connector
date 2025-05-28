@@ -36,10 +36,11 @@ Feature("visiting the application", () => {
       app.use(middleware);
     });
 
-    When("Middleware will execute callback", async () => {
-      const res = await request(app).post("/callback");
+    When("Client navigates to /id/login", async () => {
+      const res = await request(app).get("/id/login");
 
-      expect(res.status).to.equal(200);
+      expect(res.status).to.equal(302);
+      expect(res.header.location).to.include(`${issuerBaseURL}/oauth/authorize`);
     });
   });
 });

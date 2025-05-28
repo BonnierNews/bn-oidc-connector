@@ -37,8 +37,13 @@ export const middleware = async (clientConfig: ClientConfig): Promise<Router> =>
     return next();
   });
 
-  router.post("/callback", (_req, res) => {
-    res.send(`Callback received for client ID: ${clientId}`);
+  router.get("/id/login", (_req, res) => {
+    res.redirect(
+      `${issuerBaseURL}/oauth/authorize?client_id=${clientId}&response_type=code&scope=openid profile email entitlements externalIds offline_access&redirect_uri=${encodeURIComponent(
+        `${issuerBaseURL}/id/callback`
+      )}&state=xyz&nonce=abc`
+    );
+    // res.send(`Callback received for client ID: ${clientId}`);
   });
 
   return router;
