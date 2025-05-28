@@ -5,11 +5,15 @@ import { Router as createRouter, type Router } from "express";
 
 interface ClientConfig {
   clientId: string;
+  issuerBaseURL: string;
 }
 
-export const middleware = (clientConfig: ClientConfig): Router => {
+export const middleware = async (clientConfig: ClientConfig): Promise<Router> => {
   const router = createRouter();
-  const { clientId } = clientConfig;
+  const { clientId, issuerBaseURL } = clientConfig;
+
+  const response = await fetch(`${issuerBaseURL}/oauth/.well-known/openid-configuration`);
+
   router.use((_req, _res, next) => {
     // do any required setup
     return next();
