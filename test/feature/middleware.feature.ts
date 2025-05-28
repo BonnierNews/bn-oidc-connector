@@ -6,6 +6,7 @@ import { createApp } from "../helpers/app-helper";
 import { middleware as createMiddleware } from "../../lib/middleware";
 
 const issuerBaseURL = "https://oidc.test";
+const baseURL = "http://test.example";
 
 Feature("visiting the application", () => {
 
@@ -32,7 +33,7 @@ Feature("visiting the application", () => {
 
     And("the application is configured with a client ID and issuer base URL", async () => {
       app = createApp();
-      const middleware: Router = await createMiddleware({ clientId: "test-client-id", issuerBaseURL });
+      const middleware: Router = await createMiddleware({ clientId: "test-client-id", issuerBaseURL, baseURL });
       app.use(middleware);
     });
 
@@ -40,7 +41,15 @@ Feature("visiting the application", () => {
       const res = await request(app).get("/id/login");
 
       expect(res.status).to.equal(302);
-      expect(res.header.location).to.include(`${issuerBaseURL}/oauth/authorize`);
+      const redirectUri = new URL(res.header.location);
+      expect(redirectUri.toString()).to.include(`${issuerBaseURL}/oauth/authorize`);
+      const queryParams = Object.fromEntries(redirectUri.searchParams.entries());
+      expect(queryParams.client_id).to.equal("test-client-id");
+      expect(queryParams.response_type).to.equal("code");
+      expect(queryParams.scope).to.equal("openid profile email entitlements externalIds offline_access");
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback`);
+      expect(queryParams.state).to.exist;
+      expect(queryParams.nonce).to.exist;
     });
   });
 });

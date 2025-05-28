@@ -6,6 +6,7 @@ import { Router as createRouter, type Router } from "express";
 type ClientConfig = {
   clientId: string;
   issuerBaseURL: string;
+  baseURL: string;
 };
 
 type OIDCWellKnownConfig = {
@@ -25,7 +26,7 @@ type OIDCWellKnownConfig = {
 
 export const middleware = async (clientConfig: ClientConfig): Promise<Router> => {
   const router = createRouter();
-  const { clientId, issuerBaseURL } = clientConfig;
+  const { clientId, issuerBaseURL, baseURL } = clientConfig;
 
   const response = await fetch(`${issuerBaseURL}/oauth/.well-known/openid-configuration`);
 
@@ -40,7 +41,7 @@ export const middleware = async (clientConfig: ClientConfig): Promise<Router> =>
   router.get("/id/login", (_req, res) => {
     res.redirect(
       `${issuerBaseURL}/oauth/authorize?client_id=${clientId}&response_type=code&scope=openid profile email entitlements externalIds offline_access&redirect_uri=${encodeURIComponent(
-        `${issuerBaseURL}/id/callback`
+        `${baseURL}/id/callback`
       )}&state=xyz&nonce=abc`
     );
     // res.send(`Callback received for client ID: ${clientId}`);
