@@ -47,5 +47,11 @@ export const middleware = async (clientConfig: ClientConfig): Promise<Router> =>
     // res.send(`Callback received for client ID: ${clientId}`);
   });
 
+  router.get("/id/callback", (_req, res) => {
+    // Handle the callback from the OIDC provider
+    // This is where you would typically exchange the authorization code for tokens
+    res.status(200).send("Callback received");
+  });
+
   return router;
 };

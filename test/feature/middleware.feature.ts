@@ -51,5 +51,10 @@ Feature("visiting the application", () => {
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
     });
+
+    Then("oidc provider redirects the client to /id/callback", async () => {
+      const res = await request(app).get("/id/callback");
+      expect(res.status).to.equal(200);
+    });
   });
 });
