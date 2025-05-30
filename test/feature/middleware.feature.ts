@@ -68,8 +68,21 @@ Feature("visiting the application", async () => {
   });
 
   Scenario("Visiting with query parameter triggers autologin", () => {
+
+    Given("id-service returns oauth token", () => {
+      nock(issuerBaseURL)
+        .post("/oauth/token")
+        .reply(200, {
+          access_token: "test-access-token",
+          refresh_token: "test-refresh-token",
+          token_type: "Bearer",
+          expires_in: 600,
+          id_token: "test-id-token",
+        });
+    });
+
     When("Client navigates to any url with query parameter", async () => {
-      const res = await request(app).get("/some-path?autologin=true");
+      const res = await request(app).get("/some-path?autologin=true&otherParam=value");
       expect(res.status).to.equal(302);
       const redirectUri = new URL(res.header.location);
       expect(redirectUri.toString()).to.include(`${issuerBaseURL}/oauth/authorize`);
@@ -77,9 +90,16 @@ Feature("visiting the application", async () => {
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
       expect(queryParams.scope).to.equal("openid profile email entitlements externalIds offline_access");
-      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?returnUri=/some-path`);
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?returnUri=/some-path?otherParam=value`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
+    });
+
+    Then("oidc provider redirects the client to /id/callback", async () => {
+      const res = await request(app).get("/id/callback");
+
+      expect(res.status).to.equal(302);
+      expect(res.header["set-cookie"]).to.exist;
     });
   });
 });

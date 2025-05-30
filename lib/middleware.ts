@@ -28,6 +28,15 @@ export const middleware = async (clientConfig: ClientConfig): Promise<Router> =>
   const router = createRouter();
   const { clientId, issuerBaseURL, baseURL } = clientConfig;
 
+  const login = (res: res, returnUri: string) => {
+    // TODO: generate state, nonce and other parameters as needed
+    res.redirect(
+      `${issuerBaseURL}/oauth/authorize?client_id=${clientId}&response_type=code&scope=openid profile email entitlements externalIds offline_access&redirect_uri=${encodeURIComponent(
+        `${baseURL}/id/callback?returnUri=${returnUri}`
+      )}&state=xyz&nonce=abc`
+    );
+  };
+
   const response = await fetch(`${issuerBaseURL}/oauth/.well-known/openid-configuration`);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -38,26 +47,20 @@ export const middleware = async (clientConfig: ClientConfig): Promise<Router> =>
     if (req.query.autologin) {
       // TODO: Remove autologin query param
       // debugger;
-      console.log(req.originalUrl);
 
-      const returnUri = req.originalUrl;
+      const url = new URL(req.originalUrl, baseURL);
+      url.searchParams.delete("autologin");
+      const returnUri = url.pathname + url.search;
+
       // Redirect to login if autologin query param is present
-      return res.redirect(
-        `${issuerBaseURL}/oauth/authorize?client_id=${clientId}&response_type=code&scope=openid profile email entitlements externalIds offline_access&redirect_uri=${encodeURIComponent(
-          `${baseURL}/id/callback?returnUri=${returnUri}`
-        )}&state=xyz&nonce=abc`
-      );
+      login(res, returnUri);
     }
     // do any required setup
     return next();
   });
 
   router.get("/id/login", (_req, res) => {
-    res.redirect(
-      `${issuerBaseURL}/oauth/authorize?client_id=${clientId}&response_type=code&scope=openid profile email entitlements externalIds offline_access&redirect_uri=${encodeURIComponent(
-        `${baseURL}/id/callback?returnUri=/test`
-      )}&state=xyz&nonce=abc`
-    );
+    login(res, "/test");
     // res.send(`Callback received for client ID: ${clientId}`);
   });
 
