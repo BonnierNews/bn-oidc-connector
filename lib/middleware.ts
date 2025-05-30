@@ -33,7 +33,21 @@ export const middleware = async (clientConfig: ClientConfig): Promise<Router> =>
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const wellknownConfig: OIDCWellKnownConfig = await response.json();
 
-  router.use((_req, _res, next) => {
+  router.use((req, res, next) => {
+    // Check query params
+    if (req.query.autologin) {
+      // TODO: Remove autologin query param
+      // debugger;
+      console.log(req.originalUrl);
+
+      const returnUri = req.originalUrl;
+      // Redirect to login if autologin query param is present
+      return res.redirect(
+        `${issuerBaseURL}/oauth/authorize?client_id=${clientId}&response_type=code&scope=openid profile email entitlements externalIds offline_access&redirect_uri=${encodeURIComponent(
+          `${baseURL}/id/callback?returnUri=${returnUri}`
+        )}&state=xyz&nonce=abc`
+      );
+    }
     // do any required setup
     return next();
   });
