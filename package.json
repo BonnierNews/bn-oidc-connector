@@ -19,7 +19,7 @@
       "require": "./dist/index.cjs"
     }
   },
-  "homepage": "https://github.com/BonnierNews/bn-oidc-connector#readme#readme",
+  "homepage": "https://github.com/BonnierNews/bn-oidc-connector#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BonnierNews/bn-oidc-connector.git"

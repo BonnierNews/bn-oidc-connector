@@ -41,16 +41,34 @@ export const middleware = async (clientConfig: ClientConfig): Promise<Router> =>
   router.get("/id/login", (_req, res) => {
     res.redirect(
       `${issuerBaseURL}/oauth/authorize?client_id=${clientId}&response_type=code&scope=openid profile email entitlements externalIds offline_access&redirect_uri=${encodeURIComponent(
-        `${baseURL}/id/callback`
+        `${baseURL}/id/callback?returnUri=/test`
       )}&state=xyz&nonce=abc`
     );
     // res.send(`Callback received for client ID: ${clientId}`);
   });
 
-  router.get("/id/callback", (_req, res) => {
-    // Handle the callback from the OIDC provider
-    // This is where you would typically exchange the authorization code for tokens
-    res.status(200).send("Callback received");
+  router.get("/id/callback", async (req, res) => {
+    const tokenResponse = await fetch(`${issuerBaseURL}/oauth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: clientId,
+        grant_type: "authorization_code",
+        code: req.query.code as string,
+        redirect_uri: `${baseURL}/id/callback`,
+      }),
+    });
+
+    const tokens = JSON.parse(await tokenResponse.text());
+
+    // @todo Fetch domain from config
+    res.cookie("tokens", tokens, {
+      httpOnly: true,
+      secure: true,
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
+    });
+
+    res.redirect(req.query.returnUri as string || "/");
   });
 
   return router;

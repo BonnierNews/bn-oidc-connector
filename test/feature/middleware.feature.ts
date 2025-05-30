@@ -28,6 +28,14 @@ Feature("visiting the application", () => {
           subject_types_supported: [ "public" ],
           id_token_signing_alg_values_supported: [ "HS256", "RS256" ],
           ui_locales_supported: [ "da-DK", "en-US", "fi-FI", "nl-NL", "nb-NO", "sv-SE" ],
+        })
+        .post("/oauth/token")
+        .reply(200, {
+          access_token: "test-access-token",
+          refresh_token: "test-refresh-token",
+          token_type: "Bearer",
+          expires_in: 600,
+          id_token: "test-id-token",
         });
     });
 
@@ -47,14 +55,16 @@ Feature("visiting the application", () => {
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
       expect(queryParams.scope).to.equal("openid profile email entitlements externalIds offline_access");
-      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback`);
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?returnUri=/test`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
     });
 
     Then("oidc provider redirects the client to /id/callback", async () => {
       const res = await request(app).get("/id/callback");
-      expect(res.status).to.equal(200);
+
+      expect(res.status).to.equal(302);
+      expect(res.header["set-cookie"]).to.exist;
     });
   });
 });
