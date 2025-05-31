@@ -1,13 +1,10 @@
-import { Router as createRouter, type Router } from "express";
-/**
- * Express middleware to be used to connect to Bonnier OIDC provider and register reguired routes.
- */
-
-type ClientConfig = {
-  clientId: string;
-  issuerBaseURL: string;
-  baseURL: string;
-};
+import {
+  Router as createRouter,
+  type NextFunction,
+  type Router,
+  type Request,
+  type Response,
+} from "express";
 
 type OIDCWellKnownConfig = {
   issuer: string;
@@ -24,62 +21,110 @@ type OIDCWellKnownConfig = {
   ui_locales_supported: string[];
 };
 
-export const middleware = async (clientConfig: ClientConfig): Promise<Router> => {
-  const router = createRouter();
-  const { clientId, issuerBaseURL, baseURL } = clientConfig;
+type ClientConfig = {
+  clientId: string;
+  clientSecret?: string;
+  issuerBaseURL: string;
+  baseURL: string; // TODO: Better name?
+  loginPath?: string; // Path to the login endpoint, defaults to "/id/login"
+  callbackPath?: string; // Path to the callback endpoint, defaults to "/id/callback"
+  logoutPath?: string; // Path to the logout endpoint, defaults to "/id/logout"
+  cookieDomain?: string; // Domain for the cookie, defaults to the current domain
+};
 
-  const login = (res: res, returnUri: string) => {
-    // TODO: generate state, nonce and other parameters as needed
-    res.redirect(
-      `${issuerBaseURL}/oauth/authorize?client_id=${clientId}&response_type=code&scope=openid profile email entitlements externalIds offline_access&redirect_uri=${encodeURIComponent(
-        `${baseURL}/id/callback?returnUri=${returnUri}`
-      )}&state=xyz&nonce=abc`
-    );
+let clientConfig: ClientConfig;
+let wellKnownConfig: OIDCWellKnownConfig;
+
+/**
+ * Redirects the user to the OIDC provider for login with the necessary parameters.
+ */
+const login = (res: Response, returnUri: string) => {
+  if (!clientConfig || !wellKnownConfig) {
+    throw new Error("Middleware must be initialized before calling login");
+  }
+
+  const authorizationUrl = new URL(
+    wellKnownConfig.authorization_endpoint, clientConfig.issuerBaseURL
+  );
+  const redirectUri = new URL(
+    `${clientConfig.baseURL}${clientConfig.callbackPath}?returnUri=${returnUri}`
+  );
+
+  authorizationUrl.searchParams.append("client_id", clientConfig.clientId);
+  authorizationUrl.searchParams.append("response_type", "code");
+  authorizationUrl.searchParams.append("scope", "openid profile email entitlements offline_access");
+  authorizationUrl.searchParams.append("redirect_uri", redirectUri.toString());
+  authorizationUrl.searchParams.append("state", "xyz"); // TODO: generate a secure random state
+  authorizationUrl.searchParams.append("nonce", "abc"); // TODO: generate a secure random nonce
+
+  res.redirect(authorizationUrl.toString());
+};
+
+/**
+ * Express middleware to be used to connect to Bonnier News OIDC provider and
+ * register required routes.
+ */
+const middleware = async (config: ClientConfig): Promise<Router> => {
+  const defaults = {
+    loginPath: "/id/login",
+    callbackPath: "/id/callback",
   };
 
-  const response = await fetch(`${issuerBaseURL}/oauth/.well-known/openid-configuration`);
+  clientConfig = { ...defaults, ...config };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const wellknownConfig: OIDCWellKnownConfig = await response.json();
+  const router = createRouter();
 
-  router.use((req, res, next) => {
-    // Check query params
+  const response = await fetch(`${clientConfig.issuerBaseURL}/oauth/.well-known/openid-configuration`);
+  wellKnownConfig = await response.json();
+
+  /**
+   * Middleware to check for query parameters.
+   */
+  router.use((req: Request, res: Response, next: NextFunction) => {
+    // TODO: For a proper autologin, we should add the prompt "none" to the login request
     if (req.query.autologin) {
-      // TODO: Remove autologin query param
-      // debugger;
+      const searchParams = new URLSearchParams(req.query as Record<string, string>);
+      searchParams.delete("autologin");
+      let returnUri = req.path;
 
-      const url = new URL(req.originalUrl, baseURL);
-      url.searchParams.delete("autologin");
-      const returnUri = url.pathname + url.search;
+      if (searchParams.size > 0) {
+        returnUri += `?${searchParams.toString()}`;
+      }
 
-      // Redirect to login if autologin query param is present
       login(res, returnUri);
+
+      return;
     }
-    // do any required setup
+
     return next();
   });
 
-  router.get("/id/login", (_req, res) => {
+  /**
+   * Handles the login route by redirecting to the OIDC provider.
+   */
+  router.get(clientConfig.loginPath as string, (_req, res) => {
     login(res, "/test");
-    // res.send(`Callback received for client ID: ${clientId}`);
   });
 
-  router.get("/id/callback", async (req, res) => {
-    const tokenResponse = await fetch(`${issuerBaseURL}/oauth/token`, {
+  /**
+   * Handles the callback route by exchanging the authorization code for tokens.
+   */
+  router.get(clientConfig.callbackPath as string, async (req, res) => {
+    const tokenResponse = await fetch(wellKnownConfig.token_endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: clientId,
+        client_id: clientConfig.clientId,
         grant_type: "authorization_code",
         code: req.query.code as string,
-        redirect_uri: `${baseURL}/id/callback`,
+        redirect_uri: `${clientConfig.baseURL}${clientConfig.callbackPath}`,
       }),
     });
 
     const tokens = JSON.parse(await tokenResponse.text());
 
-    // @todo Fetch domain from config
     res.cookie("tokens", tokens, {
+      domain: clientConfig.cookieDomain ?? req.hostname,
       httpOnly: true,
       secure: true,
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
@@ -89,4 +134,10 @@ export const middleware = async (clientConfig: ClientConfig): Promise<Router> =>
   });
 
   return router;
+};
+
+export {
+  middleware,
+  login,
+  ClientConfig,
 };

@@ -1,14 +1,13 @@
-import { Router } from "express";
 import request from "supertest";
 import nock from "nock";
 
-import { createApp } from "../helpers/app-helper";
-import { middleware as createMiddleware } from "../../lib/middleware";
+import { createAppWithMiddleware } from "../helpers/app-helper";
 
+const clientId = "test-client-id";
 const issuerBaseURL = "https://oidc.test";
 const baseURL = "http://test.example";
 
-Feature("visiting the application", async () => {
+Feature("Login", async () => {
   nock(issuerBaseURL)
     .get("/oauth/.well-known/openid-configuration")
     .reply(200, {
@@ -26,12 +25,13 @@ Feature("visiting the application", async () => {
       ui_locales_supported: [ "da-DK", "en-US", "fi-FI", "nl-NL", "nb-NO", "sv-SE" ],
     });
 
-  const app = createApp();
-  const middleware: Router = await createMiddleware({ clientId: "test-client-id", issuerBaseURL, baseURL });
-  app.use(middleware);
+  const app = await createAppWithMiddleware({ clientId, issuerBaseURL, baseURL });
 
-  Scenario("Visiting /", () => {
-    Given("id-service returns oauth token", () => {
+  Scenario("Login is initiated by user clicking login button", () => {
+    let loginResponse: request.Response;
+    let callbackResponse: request.Response;
+
+    Given("the OIDC provider can handle an OAuth token request", () => {
       nock(issuerBaseURL)
         .post("/oauth/token")
         .reply(200, {
@@ -43,33 +43,38 @@ Feature("visiting the application", async () => {
         });
     });
 
-    When("Client navigates to /id/login", async () => {
-      const res = await request(app).get("/id/login");
+    When("user requests the login endpoint", async () => {
+      loginResponse = await request(app).get("/id/login");
+    });
 
-      expect(res.status).to.equal(302);
-      const redirectUri = new URL(res.header.location);
+    Then("user is redirected to the OIDC provider for authentication", () => {
+      expect(loginResponse.status).to.equal(302);
+      const redirectUri = new URL(loginResponse.header.location);
       expect(redirectUri.toString()).to.include(`${issuerBaseURL}/oauth/authorize`);
       const queryParams = Object.fromEntries(redirectUri.searchParams.entries());
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
-      expect(queryParams.scope).to.equal("openid profile email entitlements externalIds offline_access");
+      expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
       expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?returnUri=/test`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
     });
 
-    Then("oidc provider redirects the client to /id/callback", async () => {
-      const res = await request(app).get("/id/callback");
-
-      expect(res.status).to.equal(302);
-      expect(res.header["set-cookie"]).to.exist;
+    When("OIDC provider redirects back to the callback endpoint", async () => {
+      callbackResponse = await request(app).get("/id/callback?code=test-auth-code&state=test-state");
     });
 
+    Then("token cookie is set and user is redirected", () => {
+      expect(callbackResponse.status).to.equal(302);
+      expect(callbackResponse.header["set-cookie"]).to.exist;
+    });
   });
 
-  Scenario("Visiting with query parameter triggers autologin", () => {
+  Scenario("Login is initiated by query parameter", () => {
+    let loginResponse: request.Response;
+    let callbackResponse: request.Response;
 
-    Given("id-service returns oauth token", () => {
+    Given("the OIDC provider can handle an OAuth token request", () => {
       nock(issuerBaseURL)
         .post("/oauth/token")
         .reply(200, {
@@ -81,25 +86,30 @@ Feature("visiting the application", async () => {
         });
     });
 
-    When("Client navigates to any url with query parameter", async () => {
-      const res = await request(app).get("/some-path?autologin=true&otherParam=value");
-      expect(res.status).to.equal(302);
-      const redirectUri = new URL(res.header.location);
+    When("client navigates to a URL with autologin query parameter", async () => {
+      loginResponse = await request(app).get("/some-path?autologin=true&otherParam=value");
+    });
+
+    Then("user is redirected to the OIDC provider for authentication", () => {
+      expect(loginResponse.status).to.equal(302);
+      const redirectUri = new URL(loginResponse.header.location);
       expect(redirectUri.toString()).to.include(`${issuerBaseURL}/oauth/authorize`);
       const queryParams = Object.fromEntries(redirectUri.searchParams.entries());
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
-      expect(queryParams.scope).to.equal("openid profile email entitlements externalIds offline_access");
+      expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
       expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?returnUri=/some-path?otherParam=value`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
     });
 
-    Then("oidc provider redirects the client to /id/callback", async () => {
-      const res = await request(app).get("/id/callback");
+    When("OIDC provider redirects back to the callback endpoint", async () => {
+      callbackResponse = await request(app).get("/id/callback?code=test-auth-code&state=test-state");
+    });
 
-      expect(res.status).to.equal(302);
-      expect(res.header["set-cookie"]).to.exist;
+    Then("token cookie is set and user is redirected", () => {
+      expect(callbackResponse.status).to.equal(302);
+      expect(callbackResponse.header["set-cookie"]).to.exist;
     });
   });
 });
