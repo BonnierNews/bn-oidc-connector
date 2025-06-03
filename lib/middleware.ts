@@ -26,12 +26,12 @@ type OIDCWellKnownConfig = {
 type ClientConfig = {
   clientId: string;
   clientSecret?: string;
-  issuerBaseURL: string;
-  baseURL: string; // TODO: Better name?
+  issuerBaseURL: URL;
+  baseURL: URL; // TODO: Better name?
   loginPath?: string; // Path to the login endpoint, defaults to "/id/login"
   callbackPath?: string; // Path to the callback endpoint, defaults to "/id/callback"
   logoutPath?: string; // Path to the logout endpoint, defaults to "/id/logout"
-  cookieDomain?: string; // Domain where cookies should be set
+  cookieDomain?: URL; // Domain where cookies should be set. TODO: Should this be forced?
 };
 
 let clientConfig: ClientConfig;
@@ -51,7 +51,8 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
 
   const router = createRouter();
 
-  const response = await fetch(`${clientConfig.issuerBaseURL}/oauth/.well-known/openid-configuration`);
+  // TODO: Add error handling for fetch requests
+  const response = await fetch(`${clientConfig.issuerBaseURL}oauth/.well-known/openid-configuration`);
   wellKnownConfig = await response.json();
 
   /**
@@ -68,7 +69,16 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
         returnUri += `?${searchParams.toString()}`;
       }
 
-      login(res, returnUri);
+      // TODO: Add options type
+      // const options = {
+      //   returnUri,
+      // };
+      //
+      // if (req.query.login === "silent") {
+      //   options.prompt = "none";
+      // }
+
+      login(res, returnUri as string);
 
       return;
     }
@@ -80,7 +90,7 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
    * Handles the login route by redirecting to the OIDC provider.
    */
   router.get(clientConfig.loginPath as string, (req: Request, res: Response) => {
-    const returnUri = req.query["return-uri"] ?? req.query.returnUri ?? "/";
+    const returnUri = req.query["return-uri"] ?? "/";
 
     login(res, returnUri as string);
   });
@@ -91,7 +101,7 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
   router.get(clientConfig.callbackPath as string, async (req: Request, res: Response) => {
     const { state: incomingState } = req.query;
     const { state: storedState, codeVerifier } = req.cookies.bnauthparams;
-    const returnUri = req.query["return-uri"] ?? req.query.returnUri ?? "/";
+    const returnUri = req.query["return-uri"] ?? "/";
 
     if (incomingState !== storedState) {
       res.status(400).send("Invalid state parameter");
@@ -114,9 +124,9 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
     const tokens = JSON.parse(await tokenResponse.text());
 
     res.cookie("tokens", tokens, {
-      domain: clientConfig.cookieDomain ?? req.hostname,
+      domain: clientConfig.cookieDomain?.hostname ?? req.hostname,
       httpOnly: true,
-      secure: true,
+      secure: new URL(clientConfig.baseURL).protocol === "https:",
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
     });
 

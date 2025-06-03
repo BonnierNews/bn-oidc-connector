@@ -25,7 +25,11 @@ Feature("Login", async () => {
       ui_locales_supported: [ "da-DK", "en-US", "fi-FI", "nl-NL", "nb-NO", "sv-SE" ],
     });
 
-  const app = await createAppWithMiddleware({ clientId, issuerBaseURL, baseURL });
+  const app = await createAppWithMiddleware({
+    clientId,
+    issuerBaseURL: new URL(issuerBaseURL),
+    baseURL: new URL(baseURL),
+  });
 
   Scenario("Login is initiated by user clicking login button", () => {
     let loginResponse: request.Response;
@@ -46,7 +50,7 @@ Feature("Login", async () => {
     });
 
     When("user requests the login endpoint", async () => {
-      loginResponse = await request(app).get("/id/login?return-uri=/test");
+      loginResponse = await request(app).get("/id/login?return-uri=%2Ftest");
       cookies = loginResponse.header["set-cookie"];
     });
 
@@ -58,7 +62,7 @@ Feature("Login", async () => {
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
       expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
-      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?return-uri=/test`);
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?return-uri=%2Ftest`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
 
@@ -108,7 +112,7 @@ Feature("Login", async () => {
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
       expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
-      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?return-uri=/some-path?otherParam=value`);
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?return-uri=%2Fsome-path%3FotherParam%3Dvalue`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
 

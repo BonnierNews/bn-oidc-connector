@@ -42,9 +42,9 @@ const login = (res: Response, returnUri: string) => {
   const authorizationUrl = new URL(
     wellKnownConfig.authorization_endpoint, clientConfig.issuerBaseURL
   );
-  const redirectUri = new URL(
-    `${clientConfig.baseURL}${clientConfig.callbackPath}?return-uri=${returnUri}`
-  );
+  const redirectUri = clientConfig.baseURL;
+  redirectUri.pathname = clientConfig.callbackPath as string;
+  redirectUri.searchParams.set("return-uri", returnUri);
 
   /** Generate random state and nonce values */
   const state = crypto.randomBytes(16).toString("hex");
@@ -55,9 +55,9 @@ const login = (res: Response, returnUri: string) => {
 
   // TODO: Is there a better name for this cookie?
   res.cookie("bnauthparams", { nonce, state, codeVerifier }, {
-    domain: clientConfig.cookieDomain,
+    domain: clientConfig.cookieDomain?.hostname ?? clientConfig.baseURL.hostname,
     httpOnly: true,
-    secure: true,
+    secure: clientConfig.baseURL.protocol === "https:",
     expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
   });
 
