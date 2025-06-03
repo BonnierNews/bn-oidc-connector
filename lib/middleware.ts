@@ -6,6 +6,8 @@ import {
   type Response,
 } from "express";
 
+import { login } from "./login";
+
 type OIDCWellKnownConfig = {
   issuer: string;
   authorization_endpoint: string;
@@ -29,36 +31,11 @@ type ClientConfig = {
   loginPath?: string; // Path to the login endpoint, defaults to "/id/login"
   callbackPath?: string; // Path to the callback endpoint, defaults to "/id/callback"
   logoutPath?: string; // Path to the logout endpoint, defaults to "/id/logout"
-  cookieDomain?: string; // Domain for the cookie, defaults to the current domain
+  cookieDomain?: string; // Domain where cookies should be set
 };
 
 let clientConfig: ClientConfig;
 let wellKnownConfig: OIDCWellKnownConfig;
-
-/**
- * Redirects the user to the OIDC provider for login with the necessary parameters.
- */
-const login = (res: Response, returnUri: string) => {
-  if (!clientConfig || !wellKnownConfig) {
-    throw new Error("Middleware must be initialized before calling login");
-  }
-
-  const authorizationUrl = new URL(
-    wellKnownConfig.authorization_endpoint, clientConfig.issuerBaseURL
-  );
-  const redirectUri = new URL(
-    `${clientConfig.baseURL}${clientConfig.callbackPath}?returnUri=${returnUri}`
-  );
-
-  authorizationUrl.searchParams.append("client_id", clientConfig.clientId);
-  authorizationUrl.searchParams.append("response_type", "code");
-  authorizationUrl.searchParams.append("scope", "openid profile email entitlements offline_access");
-  authorizationUrl.searchParams.append("redirect_uri", redirectUri.toString());
-  authorizationUrl.searchParams.append("state", "xyz"); // TODO: generate a secure random state
-  authorizationUrl.searchParams.append("nonce", "abc"); // TODO: generate a secure random nonce
-
-  res.redirect(authorizationUrl.toString());
-};
 
 /**
  * Express middleware to be used to connect to Bonnier News OIDC provider and
@@ -102,14 +79,26 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
   /**
    * Handles the login route by redirecting to the OIDC provider.
    */
-  router.get(clientConfig.loginPath as string, (_req, res) => {
-    login(res, "/test");
+  router.get(clientConfig.loginPath as string, (req: Request, res: Response) => {
+    const returnUri = req.query["return-uri"] ?? req.query.returnUri ?? "/";
+
+    login(res, returnUri as string);
   });
 
   /**
    * Handles the callback route by exchanging the authorization code for tokens.
    */
-  router.get(clientConfig.callbackPath as string, async (req, res) => {
+  router.get(clientConfig.callbackPath as string, async (req: Request, res: Response) => {
+    const { state: incomingState } = req.query;
+    const { state: storedState, codeVerifier } = req.cookies.bnauthparams;
+    const returnUri = req.query["return-uri"] ?? req.query.returnUri ?? "/";
+
+    if (incomingState !== storedState) {
+      res.status(400).send("Invalid state parameter");
+
+      return;
+    }
+
     const tokenResponse = await fetch(wellKnownConfig.token_endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -118,6 +107,7 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
         grant_type: "authorization_code",
         code: req.query.code as string,
         redirect_uri: `${clientConfig.baseURL}${clientConfig.callbackPath}`,
+        code_verifier: codeVerifier,
       }),
     });
 
@@ -130,14 +120,24 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
     });
 
-    res.redirect(req.query.returnUri as string || "/");
+    res.redirect(returnUri as string);
   });
 
   return router;
 };
 
+const getClientConfig = (): ClientConfig => {
+  return clientConfig;
+};
+
+const getWellKnownConfig = (): OIDCWellKnownConfig => {
+  return wellKnownConfig;
+};
+
 export {
-  middleware,
-  login,
+  OIDCWellKnownConfig,
   ClientConfig,
+  middleware,
+  getClientConfig,
+  getWellKnownConfig,
 };

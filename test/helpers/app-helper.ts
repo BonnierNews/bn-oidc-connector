@@ -1,3 +1,4 @@
+import cookieParser from "cookie-parser";
 import express, { Router } from "express";
 
 import { middleware as createMiddleware, type ClientConfig } from "../../lib/middleware";
@@ -5,6 +6,7 @@ import { middleware as createMiddleware, type ClientConfig } from "../../lib/mid
 const createApp = () => {
   const app = express();
   app.use(express.json());
+  app.use(cookieParser());
   app.listen(3000);
   return app;
 };

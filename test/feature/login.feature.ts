@@ -30,6 +30,8 @@ Feature("Login", async () => {
   Scenario("Login is initiated by user clicking login button", () => {
     let loginResponse: request.Response;
     let callbackResponse: request.Response;
+    let cookies: string;
+    let state: string;
 
     Given("the OIDC provider can handle an OAuth token request", () => {
       nock(issuerBaseURL)
@@ -44,7 +46,8 @@ Feature("Login", async () => {
     });
 
     When("user requests the login endpoint", async () => {
-      loginResponse = await request(app).get("/id/login");
+      loginResponse = await request(app).get("/id/login?return-uri=/test");
+      cookies = loginResponse.header["set-cookie"];
     });
 
     Then("user is redirected to the OIDC provider for authentication", () => {
@@ -55,13 +58,17 @@ Feature("Login", async () => {
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
       expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
-      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?returnUri=/test`);
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?return-uri=/test`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
+
+      state = queryParams.state;
     });
 
     When("OIDC provider redirects back to the callback endpoint", async () => {
-      callbackResponse = await request(app).get("/id/callback?code=test-auth-code&state=test-state");
+      callbackResponse = await request(app)
+        .get(`/id/callback?code=test-auth-code&state=${state}`)
+        .set("Cookie", cookies);
     });
 
     Then("token cookie is set and user is redirected", () => {
@@ -73,6 +80,8 @@ Feature("Login", async () => {
   Scenario("Login is initiated by query parameter", () => {
     let loginResponse: request.Response;
     let callbackResponse: request.Response;
+    let cookies: string;
+    let state: string;
 
     Given("the OIDC provider can handle an OAuth token request", () => {
       nock(issuerBaseURL)
@@ -88,6 +97,7 @@ Feature("Login", async () => {
 
     When("client navigates to a URL with autologin query parameter", async () => {
       loginResponse = await request(app).get("/some-path?autologin=true&otherParam=value");
+      cookies = loginResponse.header["set-cookie"];
     });
 
     Then("user is redirected to the OIDC provider for authentication", () => {
@@ -98,13 +108,17 @@ Feature("Login", async () => {
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
       expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
-      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?returnUri=/some-path?otherParam=value`);
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?return-uri=/some-path?otherParam=value`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
+
+      state = queryParams.state;
     });
 
     When("OIDC provider redirects back to the callback endpoint", async () => {
-      callbackResponse = await request(app).get("/id/callback?code=test-auth-code&state=test-state");
+      callbackResponse = await request(app)
+        .get(`/id/callback?code=test-auth-code&state=${state}`)
+        .set("Cookie", cookies);
     });
 
     Then("token cookie is set and user is redirected", () => {
