@@ -1,6 +1,7 @@
 import request from "supertest";
 import nock from "nock";
 
+import { parseSetCookieHeader } from "../helpers/cookie-helper";
 import { createAppWithMiddleware } from "../helpers/app-helper";
 
 const clientId = "test-client-id";
@@ -77,7 +78,13 @@ Feature("Login", async () => {
 
     Then("token cookie is set and user is redirected", () => {
       expect(callbackResponse.status).to.equal(302);
-      expect(callbackResponse.header["set-cookie"]).to.exist;
+      const parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
+      expect(parsedSetCookieHeader.bnoidctokens).to.exist;
+      expect(parsedSetCookieHeader.bnoidctokens).to.include({
+        access_token: "test-access-token",
+        refresh_token: "test-refresh-token",
+        id_token: "test-id-token",
+      });
     });
   });
 

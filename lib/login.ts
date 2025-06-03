@@ -42,6 +42,7 @@ const login = (res: Response, returnUri: string) => {
   const authorizationUrl = new URL(
     wellKnownConfig.authorization_endpoint, clientConfig.issuerBaseURL
   );
+
   const redirectUri = clientConfig.baseURL;
   redirectUri.pathname = clientConfig.callbackPath as string;
   redirectUri.searchParams.set("return-uri", returnUri);
@@ -53,8 +54,7 @@ const login = (res: Response, returnUri: string) => {
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
 
-  // TODO: Is there a better name for this cookie?
-  res.cookie("bnauthparams", { nonce, state, codeVerifier }, {
+  res.cookie("bnoidcauthparams", { nonce, state, codeVerifier }, {
     domain: clientConfig.cookieDomain?.hostname ?? clientConfig.baseURL.hostname,
     httpOnly: true,
     secure: clientConfig.baseURL.protocol === "https:",

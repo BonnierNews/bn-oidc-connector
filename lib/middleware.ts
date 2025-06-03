@@ -100,7 +100,7 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
    */
   router.get(clientConfig.callbackPath as string, async (req: Request, res: Response) => {
     const { state: incomingState } = req.query;
-    const { state: storedState, codeVerifier } = req.cookies.bnauthparams;
+    const { state: storedState, codeVerifier } = req.cookies.bnoidcauthparams;
     const returnUri = req.query["return-uri"] ?? "/";
 
     if (incomingState !== storedState) {
@@ -123,7 +123,7 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
 
     const tokens = JSON.parse(await tokenResponse.text());
 
-    res.cookie("tokens", tokens, {
+    res.cookie("bnoidctokens", tokens, {
       domain: clientConfig.cookieDomain?.hostname ?? req.hostname,
       httpOnly: true,
       secure: new URL(clientConfig.baseURL).protocol === "https:",
