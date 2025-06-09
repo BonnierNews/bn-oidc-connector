@@ -30,6 +30,7 @@ Feature("Login", async () => {
     clientId,
     issuerBaseURL: new URL(issuerBaseURL),
     baseURL: new URL(baseURL),
+    scopes: [ "profile", "email", "entitlements", "offline_access" ],
   });
 
   Scenario("Login is initiated by user clicking login button", () => {
@@ -107,7 +108,7 @@ Feature("Login", async () => {
     });
 
     When("client navigates to a URL with autologin query parameter", async () => {
-      loginResponse = await request(app).get("/some-path?autologin=true&otherParam=value");
+      loginResponse = await request(app).get("/some-path?idlogin=true&otherParam=value");
       cookies = loginResponse.header["set-cookie"];
     });
 

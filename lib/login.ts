@@ -3,9 +3,13 @@ import { type Response } from "express";
 
 import { getClientConfig, getWellKnownConfig } from "./middleware";
 
-/**
- * Function to generate a random code verifier.
- */
+type LoginOptions = {
+  returnUri: string;
+  scopes?: Array<string>;
+  prompts?: Array<string>;
+};
+
+// Function to generate a random code verifier
 const generateCodeVerifier = () => {
   return crypto
     .randomBytes(32)
@@ -15,9 +19,7 @@ const generateCodeVerifier = () => {
     .replace(/\//g, "_");
 };
 
-/**
- * Function to generate a code challenge from the verifier.
- */
+// Function to generate a code challenge from the verifier
 const generateCodeChallenge = (verifier: string) => {
   return crypto
     .createHash("sha256")
@@ -28,10 +30,8 @@ const generateCodeChallenge = (verifier: string) => {
     .replace(/\//g, "_");
 };
 
-/**
- * Redirects the user to the OIDC provider for login with the necessary parameters.
- */
-const login = (res: Response, returnUri: string) => {
+// Login handler
+const handleLogin = (res: Response, options: LoginOptions) => {
   const clientConfig = getClientConfig();
   const wellKnownConfig = getWellKnownConfig();
 
@@ -39,18 +39,22 @@ const login = (res: Response, returnUri: string) => {
     throw new Error("Middleware must be initialized before calling login");
   }
 
-  const authorizationUrl = new URL(
-    wellKnownConfig.authorization_endpoint, clientConfig.issuerBaseURL
-  );
+  const scopes = Array.from(new Set([
+    "openid",
+    ...(clientConfig.scopes ?? []),
+    ...(options.scopes ?? []),
+  ]));
+  const prompts = Array.from(new Set([
+    ...(clientConfig.prompts ?? []),
+    ...(options.prompts ?? []),
+  ]));
 
-  const redirectUri = clientConfig.baseURL;
+  const redirectUri = new URL(clientConfig.baseURL.toString());
   redirectUri.pathname = clientConfig.callbackPath as string;
-  redirectUri.searchParams.set("return-uri", returnUri);
+  redirectUri.searchParams.set("return-uri", options.returnUri);
 
-  /** Generate random state and nonce values */
   const state = crypto.randomBytes(16).toString("hex");
   const nonce = crypto.randomBytes(16).toString("hex");
-
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
 
@@ -61,16 +65,25 @@ const login = (res: Response, returnUri: string) => {
     expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
   });
 
-  authorizationUrl.searchParams.append("client_id", clientConfig.clientId);
-  authorizationUrl.searchParams.append("response_type", "code");
-  authorizationUrl.searchParams.append("scope", "openid profile email entitlements offline_access");
-  authorizationUrl.searchParams.append("redirect_uri", redirectUri.toString());
-  authorizationUrl.searchParams.append("state", state);
-  authorizationUrl.searchParams.append("nonce", nonce);
-  authorizationUrl.searchParams.append("code_challenge", codeChallenge);
-  authorizationUrl.searchParams.append("code_challenge_method", "S256");
+  const params = new URLSearchParams({
+    client_id: clientConfig.clientId,
+    response_type: "code",
+    scope: scopes.join(" "),
+    redirect_uri: redirectUri.toString(),
+    state,
+    nonce,
+    code_challenge: codeChallenge,
+    code_challenge_method: "S256",
+  });
+
+  if (prompts.length > 0) {
+    params.set("prompt", prompts.join(" "));
+  }
+
+  const authorizationUrl = new URL(wellKnownConfig.authorization_endpoint);
+  authorizationUrl.search = params.toString();
 
   res.redirect(authorizationUrl.toString());
 };
 
-export { login };
+export { handleLogin };

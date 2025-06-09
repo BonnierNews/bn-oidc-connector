@@ -6,7 +6,8 @@ import {
   type Response,
 } from "express";
 
-import { login } from "./login";
+import { handleCallback } from "./callback";
+import { handleLogin } from "./login";
 
 type OIDCWellKnownConfig = {
   issuer: string;
@@ -32,53 +33,55 @@ type ClientConfig = {
   callbackPath?: string; // Path to the callback endpoint, defaults to "/id/callback"
   logoutPath?: string; // Path to the logout endpoint, defaults to "/id/logout"
   cookieDomain?: URL; // Domain where cookies should be set. TODO: Should this be forced?
+  locale?: string; // Locale to override the OIDC provider app default locale
+  scopes?: string[]; // Scopes to request during login, defaults to ["openid", "profile", "email", "entitlements", "offline_access"]
+  prompts?: string[]; // Custom prompts to add to the login request
 };
 
-let clientConfig: ClientConfig;
-let wellKnownConfig: OIDCWellKnownConfig;
+const defaults: Partial<ClientConfig> = {
+  loginPath: "/id/login",
+  callbackPath: "/id/callback",
+  scopes: [ "openid", "entitlements", "offline_access" ],
+  prompts: [], // TODO: Should we have any default prompts?
+};
+
+let clientConfig: ClientConfig | undefined;
+let wellKnownConfig: OIDCWellKnownConfig | undefined;
 
 /**
  * Express middleware to be used to connect to Bonnier News OIDC provider and
  * register required routes.
  */
 const middleware = async (config: ClientConfig): Promise<Router> => {
-  const defaults = {
-    loginPath: "/id/login",
-    callbackPath: "/id/callback",
-  };
-
   clientConfig = { ...defaults, ...config };
 
   const router = createRouter();
 
-  // TODO: Add error handling for fetch requests
-  const response = await fetch(`${clientConfig.issuerBaseURL}oauth/.well-known/openid-configuration`);
-  wellKnownConfig = await response.json();
+  try {
+    const response = await fetch(new URL(
+      "oauth/.well-known/openid-configuration",
+      clientConfig.issuerBaseURL.toString()
+    ));
 
-  /**
-   * Middleware to check for query parameters.
-   */
+    if (!response.ok) {
+      throw new Error(`ID service responded with ${response.status}`);
+    }
+
+    wellKnownConfig = await response.json();
+  } catch (error) {
+    throw new Error(`OIDC discovery failed: ${(error as Error).message}`);
+  }
+
+  // Query parameter middleware
   router.use((req: Request, res: Response, next: NextFunction) => {
-    // TODO: For a proper autologin, we should add the prompt "none" to the login request
-    if (req.query.autologin) {
-      const searchParams = new URLSearchParams(req.query as Record<string, string>);
-      searchParams.delete("autologin");
-      let returnUri = req.path;
+    const { idlogin, ...queryParameters } = req.query as Record<string, string>;
 
-      if (searchParams.size > 0) {
-        returnUri += `?${searchParams.toString()}`;
-      }
+    if (idlogin) {
+      const searchParams = new URLSearchParams(queryParameters);
+      const returnUri = searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path;
+      const prompts = idlogin === "silent" ? [ "none" ] : [];
 
-      // TODO: Add options type
-      // const options = {
-      //   returnUri,
-      // };
-      //
-      // if (req.query.login === "silent") {
-      //   options.prompt = "none";
-      // }
-
-      login(res, returnUri as string);
+      handleLogin(res, { returnUri, prompts });
 
       return;
     }
@@ -86,62 +89,25 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
     return next();
   });
 
-  /**
-   * Handles the login route by redirecting to the OIDC provider.
-   */
+  // Login route
   router.get(clientConfig.loginPath as string, (req: Request, res: Response) => {
-    const returnUri = req.query["return-uri"] ?? "/";
-
-    login(res, returnUri as string);
+    handleLogin(res, { returnUri: (req.query["return-uri"] as string) ?? "/" });
   });
 
-  /**
-   * Handles the callback route by exchanging the authorization code for tokens.
-   */
+  // Callback route
   router.get(clientConfig.callbackPath as string, async (req: Request, res: Response) => {
-    const { state: incomingState } = req.query;
-    const { state: storedState, codeVerifier } = req.cookies.bnoidcauthparams;
-    const returnUri = req.query["return-uri"] ?? "/";
-
-    if (incomingState !== storedState) {
-      res.status(400).send("Invalid state parameter");
-
-      return;
-    }
-
-    const tokenResponse = await fetch(wellKnownConfig.token_endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: clientConfig.clientId,
-        grant_type: "authorization_code",
-        code: req.query.code as string,
-        redirect_uri: `${clientConfig.baseURL}${clientConfig.callbackPath}`,
-        code_verifier: codeVerifier,
-      }),
-    });
-
-    const tokens = JSON.parse(await tokenResponse.text());
-
-    res.cookie("bnoidctokens", tokens, {
-      domain: clientConfig.cookieDomain?.hostname ?? req.hostname,
-      httpOnly: true,
-      secure: new URL(clientConfig.baseURL).protocol === "https:",
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
-    });
-
-    res.redirect(returnUri as string);
+    await handleCallback(req, res);
   });
 
   return router;
 };
 
-const getClientConfig = (): ClientConfig => {
-  return clientConfig;
+const getClientConfig = (): ClientConfig | undefined => {
+  return { ...clientConfig } as ClientConfig | undefined;
 };
 
-const getWellKnownConfig = (): OIDCWellKnownConfig => {
-  return wellKnownConfig;
+const getWellKnownConfig = (): OIDCWellKnownConfig | undefined => {
+  return { ...wellKnownConfig } as OIDCWellKnownConfig | undefined;
 };
 
 export {
