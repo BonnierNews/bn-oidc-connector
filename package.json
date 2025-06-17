@@ -34,7 +34,7 @@
     "coverage": "c8 npm test && c8 check-coverage",
     "posttest": "npm run lint",
     "lint": "eslint . --cache && npm run typecheck",
-    "format": "prettier --write . && eslint --fix ."
+    "format": "eslint --fix ."
   },
   "author": "Bonnier News AB",
   "license": "MIT",
