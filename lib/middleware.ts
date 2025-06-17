@@ -103,11 +103,11 @@ const middleware = async (config: ClientConfig): Promise<Router> => {
 };
 
 const getClientConfig = (): ClientConfig | undefined => {
-  return { ...clientConfig } as ClientConfig | undefined;
+  return clientConfig;
 };
 
 const getWellKnownConfig = (): OIDCWellKnownConfig | undefined => {
-  return { ...wellKnownConfig } as OIDCWellKnownConfig | undefined;
+  return wellKnownConfig;
 };
 
 export {

@@ -30,7 +30,7 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --test-force-exit --test-reporter ${REPORTER:-spec} --import \"tsx/esm\" --import \"./test/setup.ts\" \"test/**/*.{test,feature}.ts\"",
+    "test": "node --test --test-force-exit --test-reporter ${REPORTER:-spec} --import \"tsx/esm\" --import \"./test/setup.ts\" \"test/**/*.{test,unit,feature}.ts\"",
     "coverage": "c8 npm test && c8 check-coverage",
     "posttest": "npm run lint",
     "lint": "eslint . --cache && npm run typecheck",
