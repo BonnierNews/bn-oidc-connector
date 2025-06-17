@@ -1,6 +1,6 @@
 {
   "name": "@bonniernews/bn-oidc-connector",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Express middleware for Bonnier News OIDC authentication",
   "type": "module",
   "main": "dist/index.js",
@@ -29,6 +29,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
     "test": "node --test --test-force-exit --test-reporter ${REPORTER:-spec} --import \"tsx/esm\" --import \"./test/setup.ts\" \"test/**/*.{test,unit,feature}.ts\"",
     "coverage": "c8 npm test && c8 check-coverage",
