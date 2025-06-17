@@ -19,7 +19,7 @@
       "require": "./dist/index.cjs"
     }
   },
-  "homepage": "https://github.com/BonnierNews/bn-oidc-connector#readme#readme",
+  "homepage": "https://github.com/BonnierNews/bn-oidc-connector#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BonnierNews/bn-oidc-connector.git"
@@ -47,12 +47,14 @@
     "@bonniernews/node-test-bdd": "^0.0.4",
     "@bonniernews/tsconfig": "^0.0.2",
     "@types/chai": "^4.3.5",
+    "@types/cookie-parser": "^1.4.8",
     "@types/express": "^4.17.17",
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.4.1",
     "@types/supertest": "^6.0.3",
     "c8": "^10.1.3",
     "chai": "^4.3.7",
+    "cookie-parser": "^1.4.7",
     "eslint": "^8.44.0",
     "nock": "^14.0.4",
     "prettier": "^3.5.3",
