@@ -9,20 +9,20 @@ import {
 import { handleCallback } from "./callback";
 import { handleLogin } from "./login";
 
-// type OIDCWellKnownConfig = {
-//   issuer: string;
-//   authorization_endpoint: string;
-//   token_endpoint: string;
-//   userinfo_endpoint: string;
-//   jwks_uri: string;
-//   end_session_endpoint: string;
-//   scopes_supported: string[];
-//   response_types_supported: string[];
-//   grant_types_supported: string[];
-//   subject_types_supported: string[];
-//   id_token_signing_alg_values_supported: string[];
-//   ui_locales_supported: string[];
-// };
+type OIDCWellKnownConfig = {
+  issuer: string;
+  authorization_endpoint: string;
+  token_endpoint: string;
+  userinfo_endpoint: string;
+  jwks_uri: string;
+  end_session_endpoint: string;
+  scopes_supported: string[];
+  response_types_supported: string[];
+  grant_types_supported: string[];
+  subject_types_supported: string[];
+  id_token_signing_alg_values_supported: string[];
+  ui_locales_supported: string[];
+};
 
 type ClientConfig = {
   clientId: string;
