@@ -1,13 +1,7 @@
 import crypto from "crypto";
 import { type Response } from "express";
 
-import { getClientConfig, getWellKnownConfig } from "./middleware";
-
-type LoginOptions = {
-  returnUri: string;
-  scopes?: Array<string>;
-  prompts?: Array<string>;
-};
+import type { Context, LoginOptions } from "../types";
 
 // Function to generate a random code verifier
 const generateCodeVerifier = () => {
@@ -31,14 +25,11 @@ const generateCodeChallenge = (verifier: string) => {
 };
 
 // Login handler
-const handleLogin = (res: Response, options: LoginOptions) => {
-  const clientConfig = getClientConfig();
-  const wellKnownConfig = getWellKnownConfig();
-
-  if (!clientConfig || !wellKnownConfig) {
-    throw new Error("Middleware must be initialized before calling login");
-  }
-
+function login(
+  { clientConfig, wellKnownConfig }: Context,
+  res: Response,
+  options: LoginOptions = {}
+): void {
   const scopes = Array.from(new Set([
     "openid",
     ...(clientConfig.scopes ?? []),
@@ -51,7 +42,7 @@ const handleLogin = (res: Response, options: LoginOptions) => {
 
   const redirectUri = new URL(clientConfig.baseURL.toString());
   redirectUri.pathname = clientConfig.callbackPath as string;
-  redirectUri.searchParams.set("return-uri", options.returnUri);
+  redirectUri.searchParams.set("return-uri", options.returnUri ?? "/");
 
   const state = crypto.randomBytes(16).toString("hex");
   const nonce = crypto.randomBytes(16).toString("hex");
@@ -84,6 +75,6 @@ const handleLogin = (res: Response, options: LoginOptions) => {
   authorizationUrl.search = params.toString();
 
   res.redirect(authorizationUrl.toString());
-};
+}
 
-export { handleLogin };
+export { login };

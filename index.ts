@@ -1,2 +1,8 @@
-export { middleware } from "./lib/middleware";
-export { handleLogin as login } from "./lib/login";
+import { createOidcMiddleware } from "./lib/middleware";
+import type { ClientConfig } from "./lib/types";
+
+function auth(config: ClientConfig) {
+  return createOidcMiddleware(config);
+}
+
+export { auth, type ClientConfig };

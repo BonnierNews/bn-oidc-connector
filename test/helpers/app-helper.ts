@@ -1,7 +1,9 @@
 import cookieParser from "cookie-parser";
-import express, { Router } from "express";
+import express from "express";
+// import express, { Router } from "express";
 
-import { middleware as createMiddleware, type ClientConfig } from "../../lib/middleware";
+// import { middleware as createMiddleware, type ClientConfig } from "../../lib/middleware";
+import { auth, type ClientConfig } from "../../index";
 
 const createApp = () => {
   const app = express();
@@ -10,10 +12,10 @@ const createApp = () => {
   return app;
 };
 
-const createAppWithMiddleware = async (clientConfig: ClientConfig) => {
+const createAppWithMiddleware = (clientConfig: ClientConfig) => {
   const app = createApp();
-  const middleware: Router = await createMiddleware(clientConfig);
-  app.use(middleware);
+  // const middleware: Router = await createMiddleware(clientConfig);
+  app.use(auth(clientConfig));
   return app;
 };
 

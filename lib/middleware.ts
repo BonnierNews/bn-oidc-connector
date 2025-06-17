@@ -6,8 +6,11 @@ import {
   type Response,
 } from "express";
 
-import { handleCallback } from "./callback";
-import { handleLogin } from "./login";
+import {
+  callback,
+  login,
+} from "./handlers";
+import { Context, LoginOptions, OidcClient } from "./types";
 
 type OIDCWellKnownConfig = {
   issuer: string;
@@ -45,75 +48,92 @@ const defaults: Partial<ClientConfig> = {
   prompts: [], // TODO: Should we have any default prompts?
 };
 
-let clientConfig: ClientConfig | undefined;
-let wellKnownConfig: OIDCWellKnownConfig | undefined;
-
 /**
  * Express middleware to be used to connect to Bonnier News OIDC provider and
  * register required routes.
  */
-const middleware = async (config: ClientConfig): Promise<Router> => {
-  clientConfig = { ...defaults, ...config };
+function createOidcMiddleware(config: ClientConfig): Router {
+  const clientConfig = { ...defaults, ...config };
+  let wellKnownConfig: OIDCWellKnownConfig | null = null;
+
+  async function initialize(): Promise<void> {
+    try {
+      const response = await fetch(new URL(
+        "oauth/.well-known/openid-configuration",
+        clientConfig.issuerBaseURL.toString()
+      ));
+
+      if (!response.ok) {
+        throw new Error(`ID service responded with ${response.status}`);
+      }
+
+      wellKnownConfig = await response.json();
+    } catch (error) {
+      throw new Error(`OIDC discovery failed: ${(error as Error).message}`);
+    }
+  }
+
+  const initializePromise = initialize();
+
+  const getContext = (): Context => ({
+    clientConfig,
+    wellKnownConfig: wellKnownConfig!,
+  });
+
+  const createOidcClient = (): OidcClient => ({
+    login: (res, options) => login(getContext(), res as Response, options),
+    callback: (req, res) => callback(getContext(), req as Request, res as Response),
+  });
 
   const router = createRouter();
 
-  try {
-    const response = await fetch(new URL(
-      "oauth/.well-known/openid-configuration",
-      clientConfig.issuerBaseURL.toString()
-    ));
+  const middleware = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Ensure the OIDC provider is initialized before proceeding
+      await initializePromise;
 
-    if (!response.ok) {
-      throw new Error(`ID service responded with ${response.status}`);
-    }
+      if (!wellKnownConfig) {
+        // TODO: Throw error instead?
+        res.status(500).send("OIDC provider not initialized");
 
-    wellKnownConfig = await response.json();
-  } catch (error) {
-    throw new Error(`OIDC discovery failed: ${(error as Error).message}`);
-  }
-
-  // Query parameter middleware
-  router.use((req: Request, res: Response, next: NextFunction) => {
-    const { idlogin, ...queryParameters } = req.query as Record<string, string>;
-
-    if (idlogin) {
-      const searchParams = new URLSearchParams(queryParameters);
-      const returnUri = searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path;
-      const prompts = idlogin === "silent" ? [ "none" ] : [];
-
-      handleLogin(res, { returnUri, prompts });
+        return;
+      }
+    } catch (error) {
+      res.status(500).send("OIDC middleware initialization failed");
 
       return;
     }
 
-    return next();
+    req.oidc = createOidcClient();
+
+    // Check for query parameters to handle login
+    const { idlogin, ...queryParameters } = req.query as Record<string, string>;
+
+    if (idlogin) {
+      const searchParams = new URLSearchParams(queryParameters);
+      const options: LoginOptions = {
+        returnUri: searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path,
+        prompts: idlogin === "silent" ? [ "none" ] : [],
+      };
+
+      req.oidc!.login(res, options);
+
+      return;
+    }
+
+    next();
+  };
+
+  router.get(clientConfig.loginPath as string, middleware, (req: Request, res: Response) => {
+    // TODO: Remove fallback returnUri and get it from config in the login handler
+    req.oidc!.login(res, { returnUri: req.query["return-uri"] as string ?? "/" });
   });
 
-  // Login route
-  router.get(clientConfig.loginPath as string, (req: Request, res: Response) => {
-    handleLogin(res, { returnUri: (req.query["return-uri"] as string) ?? "/" });
+  router.get(clientConfig.callbackPath as string, middleware, (req: Request, res: Response) => {
+    req.oidc!.callback(req, res);
   });
 
-  // Callback route
-  router.get(clientConfig.callbackPath as string, async (req: Request, res: Response) => {
-    await handleCallback(req, res);
-  });
+  return router.use(middleware);
+}
 
-  return router;
-};
-
-const getClientConfig = (): ClientConfig | undefined => {
-  return clientConfig;
-};
-
-const getWellKnownConfig = (): OIDCWellKnownConfig | undefined => {
-  return wellKnownConfig;
-};
-
-export {
-  OIDCWellKnownConfig,
-  ClientConfig,
-  middleware,
-  getClientConfig,
-  getWellKnownConfig,
-};
+export { createOidcMiddleware };

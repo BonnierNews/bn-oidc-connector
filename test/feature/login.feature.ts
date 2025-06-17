@@ -8,7 +8,7 @@ const clientId = "test-client-id";
 const issuerBaseURL = "https://oidc.test";
 const baseURL = "http://test.example";
 
-Feature("Login", async () => {
+Feature("Login", () => {
   nock(issuerBaseURL)
     .get("/oauth/.well-known/openid-configuration")
     .times(1)
@@ -27,7 +27,7 @@ Feature("Login", async () => {
       ui_locales_supported: [ "da-DK", "en-US", "fi-FI", "nl-NL", "nb-NO", "sv-SE" ],
     });
 
-  const app = await createAppWithMiddleware({
+  const app = createAppWithMiddleware({
     clientId,
     issuerBaseURL: new URL(issuerBaseURL),
     baseURL: new URL(baseURL),
