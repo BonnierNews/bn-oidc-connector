@@ -8,7 +8,7 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
   const wellKnownConfig = getWellKnownConfig();
 
   if (!clientConfig || !wellKnownConfig) {
-    throw new Error("Middleware must be initialized before calling login");
+    throw new Error("Middleware must be initialized before calling callback");
   }
 
   const { state: incomingState, code } = req.query as { state: string; code: string };

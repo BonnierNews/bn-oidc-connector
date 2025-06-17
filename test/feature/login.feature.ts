@@ -11,6 +11,7 @@ const baseURL = "http://test.example";
 Feature("Login", async () => {
   nock(issuerBaseURL)
     .get("/oauth/.well-known/openid-configuration")
+    .times(1)
     .reply(200, {
       issuer: issuerBaseURL,
       authorization_endpoint: `${issuerBaseURL}/oauth/authorize`,
@@ -42,6 +43,7 @@ Feature("Login", async () => {
     Given("the OIDC provider can handle an OAuth token request", () => {
       nock(issuerBaseURL)
         .post("/oauth/token")
+        .times(1)
         .reply(200, {
           access_token: "test-access-token",
           refresh_token: "test-refresh-token",
@@ -71,6 +73,16 @@ Feature("Login", async () => {
       state = queryParams.state;
     });
 
+    When("OIDC provider redirects back to the callback endpoint with incorrect state", async () => {
+      callbackResponse = await request(app)
+        .get("/id/callback?code=test-auth-code&state=incorrect-state")
+        .set("Cookie", cookies);
+    });
+
+    Then("callback returns an error response", () => {
+      expect(callbackResponse.status).to.equal(400);
+    });
+
     When("OIDC provider redirects back to the callback endpoint", async () => {
       callbackResponse = await request(app)
         .get(`/id/callback?code=test-auth-code&state=${state}`)
@@ -98,6 +110,7 @@ Feature("Login", async () => {
     Given("the OIDC provider can handle an OAuth token request", () => {
       nock(issuerBaseURL)
         .post("/oauth/token")
+        .times(1)
         .reply(200, {
           access_token: "test-access-token",
           refresh_token: "test-refresh-token",
