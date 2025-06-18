@@ -1,6 +1,33 @@
 import { Request as ExpressRequest, Response } from "express";
 
-type OIDCWellKnownConfig = {
+type LoginOptions = {
+  returnUri?: string;
+  scopes?: string[];
+  prompts?: string[];
+};
+
+type OidcClient = {
+  login: (res: Response, options?: LoginOptions) => void;
+  callback: (req: ExpressRequest, res: Response) => void;
+  refresh: (req: ExpressRequest, res: Response) => void;
+  logout: (res: Response) => void;
+};
+
+type OidcClientConfig = {
+  clientId: string;
+  clientSecret?: string;
+  issuerBaseURL: URL;
+  baseURL: URL; // TODO: Better name?
+  loginPath?: string; // Path to the login endpoint, defaults to "/id/login"
+  callbackPath?: string; // Path to the callback endpoint, defaults to "/id/callback"
+  logoutPath?: string; // Path to the logout endpoint, defaults to "/id/logout"
+  cookieDomain?: URL; // Domain where cookies should be set. TODO: Should this be forced?
+  locale?: string; // Locale to override the OIDC provider app default locale
+  scopes?: string[]; // Scopes to request during login, defaults to ["openid", "profile", "email", "entitlements", "offline_access"]
+  prompts?: string[]; // Custom prompts to add to the login request
+};
+
+type OidcWellKnownConfig = {
   issuer: string;
   authorization_endpoint: string;
   token_endpoint: string;
@@ -15,34 +42,9 @@ type OIDCWellKnownConfig = {
   ui_locales_supported: string[];
 };
 
-type ClientConfig = {
-  clientId: string;
-  clientSecret?: string;
-  issuerBaseURL: URL;
-  baseURL: URL; // TODO: Better name?
-  loginPath?: string; // Path to the login endpoint, defaults to "/id/login"
-  callbackPath?: string; // Path to the callback endpoint, defaults to "/id/callback"
-  logoutPath?: string; // Path to the logout endpoint, defaults to "/id/logout"
-  cookieDomain?: URL; // Domain where cookies should be set. TODO: Should this be forced?
-  locale?: string; // Locale to override the OIDC provider app default locale
-  scopes?: string[]; // Scopes to request during login, defaults to ["openid", "profile", "email", "entitlements", "offline_access"]
-  prompts?: string[]; // Custom prompts to add to the login request
-};
-
 type Context = {
-  clientConfig: ClientConfig;
-  wellKnownConfig: OIDCWellKnownConfig;
-};
-
-type LoginOptions = {
-  returnUri?: string;
-  scopes?: string[];
-  prompts?: string[];
-};
-
-type OidcClient = {
-  login: (res: Response, options?: LoginOptions) => void;
-  callback: (req: ExpressRequest, res: Response) => void;
+  clientConfig: OidcClientConfig;
+  wellKnownConfig: OidcWellKnownConfig;
 };
 
 declare module "express" {
@@ -52,9 +54,9 @@ declare module "express" {
 }
 
 export type {
-  ClientConfig,
   Context,
   LoginOptions,
-  OIDCWellKnownConfig,
   OidcClient,
+  OidcClientConfig,
+  OidcWellKnownConfig,
 };

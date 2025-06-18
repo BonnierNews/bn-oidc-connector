@@ -1,30 +1,13 @@
-import crypto from "crypto";
 import { type Response } from "express";
 
 import type { Context, LoginOptions } from "../types";
+import {
+  generateCodeChallenge,
+  generateCodeVerifier,
+  generateNonce,
+  generateState,
+} from "../utils/crypto";
 
-// Function to generate a random code verifier
-const generateCodeVerifier = () => {
-  return crypto
-    .randomBytes(32)
-    .toString("base64url")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-};
-
-// Function to generate a code challenge from the verifier
-const generateCodeChallenge = (verifier: string) => {
-  return crypto
-    .createHash("sha256")
-    .update(verifier)
-    .digest("base64url")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-};
-
-// Login handler
 function login(
   { clientConfig, wellKnownConfig }: Context,
   res: Response,
@@ -44,8 +27,8 @@ function login(
   redirectUri.pathname = clientConfig.callbackPath as string;
   redirectUri.searchParams.set("return-uri", options.returnUri ?? "/");
 
-  const state = crypto.randomBytes(16).toString("hex");
-  const nonce = crypto.randomBytes(16).toString("hex");
+  const state = generateState();
+  const nonce = generateNonce();
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
 

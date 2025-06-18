@@ -1,8 +1,8 @@
 import { createOidcMiddleware } from "./lib/middleware";
-import type { ClientConfig } from "./lib/types";
+import type { OidcClientConfig } from "./lib/types";
 
-function auth(config: ClientConfig) {
+function auth(config: OidcClientConfig) {
   return createOidcMiddleware(config);
 }
 
-export { auth, type ClientConfig };
+export { auth, type OidcClientConfig };

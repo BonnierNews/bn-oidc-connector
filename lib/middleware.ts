@@ -9,39 +9,18 @@ import {
 import {
   callback,
   login,
+  logout,
+  refresh,
 } from "./handlers";
-import { Context, LoginOptions, OidcClient } from "./types";
+import {
+  Context,
+  LoginOptions,
+  OidcClientConfig,
+  OidcClient,
+  OidcWellKnownConfig,
+} from "./types";
 
-type OIDCWellKnownConfig = {
-  issuer: string;
-  authorization_endpoint: string;
-  token_endpoint: string;
-  userinfo_endpoint: string;
-  jwks_uri: string;
-  end_session_endpoint: string;
-  scopes_supported: string[];
-  response_types_supported: string[];
-  grant_types_supported: string[];
-  subject_types_supported: string[];
-  id_token_signing_alg_values_supported: string[];
-  ui_locales_supported: string[];
-};
-
-type ClientConfig = {
-  clientId: string;
-  clientSecret?: string;
-  issuerBaseURL: URL;
-  baseURL: URL; // TODO: Better name?
-  loginPath?: string; // Path to the login endpoint, defaults to "/id/login"
-  callbackPath?: string; // Path to the callback endpoint, defaults to "/id/callback"
-  logoutPath?: string; // Path to the logout endpoint, defaults to "/id/logout"
-  cookieDomain?: URL; // Domain where cookies should be set. TODO: Should this be forced?
-  locale?: string; // Locale to override the OIDC provider app default locale
-  scopes?: string[]; // Scopes to request during login, defaults to ["openid", "profile", "email", "entitlements", "offline_access"]
-  prompts?: string[]; // Custom prompts to add to the login request
-};
-
-const defaults: Partial<ClientConfig> = {
+const defaults: Partial<OidcClientConfig> = {
   loginPath: "/id/login",
   callbackPath: "/id/callback",
   scopes: [ "openid", "entitlements", "offline_access" ],
@@ -52,9 +31,9 @@ const defaults: Partial<ClientConfig> = {
  * Express middleware to be used to connect to Bonnier News OIDC provider and
  * register required routes.
  */
-function createOidcMiddleware(config: ClientConfig): Router {
+function createOidcMiddleware(config: OidcClientConfig): Router {
   const clientConfig = { ...defaults, ...config };
-  let wellKnownConfig: OIDCWellKnownConfig | null = null;
+  let wellKnownConfig: OidcWellKnownConfig | null = null;
 
   async function initialize(): Promise<void> {
     try {
@@ -83,6 +62,8 @@ function createOidcMiddleware(config: ClientConfig): Router {
   const createOidcClient = (): OidcClient => ({
     login: (res, options) => login(getContext(), res as Response, options),
     callback: (req, res) => callback(getContext(), req as Request, res as Response),
+    refresh: (req, res) => refresh(getContext(), req as Request, res as Response),
+    logout: (res) => logout(getContext(), res as Response),
   });
 
   const router = createRouter();
@@ -92,7 +73,7 @@ function createOidcMiddleware(config: ClientConfig): Router {
       // Ensure the OIDC provider is initialized before proceeding
       await initializePromise;
 
-      if (!wellKnownConfig) {
+      if (!clientConfig || !wellKnownConfig) {
         // TODO: Throw error instead?
         res.status(500).send("OIDC provider not initialized");
 
