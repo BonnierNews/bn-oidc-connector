@@ -66,9 +66,7 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
     logout: (res) => logout(getContext(), res as Response),
   });
 
-  const router = createRouter();
-
-  const middleware = async (req: Request, res: Response, next: NextFunction) => {
+  const oidcClientMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Ensure the OIDC provider is initialized before proceeding
       await initializePromise;
@@ -87,6 +85,10 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
 
     req.oidc = createOidcClient();
 
+    next();
+  };
+
+  const oidcQueryParamsMiddleware = (req: Request, res: Response, next: NextFunction) => {
     // Check for query parameters to handle login
     const { idlogin, ...queryParameters } = req.query as Record<string, string>;
 
@@ -105,16 +107,21 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
     next();
   };
 
-  router.get(clientConfig.loginPath as string, middleware, (req: Request, res: Response) => {
+  const router = createRouter();
+
+  router.use(oidcClientMiddleware);
+  router.use(oidcQueryParamsMiddleware);
+
+  router.get(clientConfig.loginPath as string, (req: Request, res: Response) => {
     // TODO: Remove fallback returnUri and get it from config in the login handler
     req.oidc!.login(res, { returnUri: req.query["return-uri"] as string ?? "/" });
   });
 
-  router.get(clientConfig.callbackPath as string, middleware, (req: Request, res: Response) => {
+  router.get(clientConfig.callbackPath as string, (req: Request, res: Response) => {
     req.oidc!.callback(req, res);
   });
 
-  return router.use(middleware);
+  return router;
 }
 
 export { createOidcMiddleware };
