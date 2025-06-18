@@ -5,6 +5,7 @@ import {
   type Request,
   type Response,
 } from "express";
+import Joi from "joi";
 
 import {
   callback,
@@ -27,6 +28,16 @@ const defaults: Partial<OidcClientConfig> = {
   prompts: [], // TODO: Should we have any default prompts?
 };
 
+const configSchema = Joi.object({
+  clientId: Joi.string().required(),
+  issuerBaseURL: Joi.object().instance(URL).required(),
+  baseURL: Joi.object().instance(URL).required(),
+  loginPath: Joi.string().optional(),
+  callbackPath: Joi.string().optional(),
+  scopes: Joi.array().items(Joi.string()).optional(),
+  prompts: Joi.array().items(Joi.string()).optional(),
+}).required();
+
 /**
  * Express middleware to be used to connect to Bonnier News OIDC provider and
  * register required routes.
@@ -34,6 +45,10 @@ const defaults: Partial<OidcClientConfig> = {
 function createOidcMiddleware(config: OidcClientConfig): Router {
   const clientConfig = { ...defaults, ...config };
   let wellKnownConfig: OidcWellKnownConfig | null = null;
+  const validation = configSchema.validate(clientConfig);
+  if (validation.error) {
+    throw new Error("OIDC client config is missing required parameters");
+  }
 
   async function initialize(): Promise<void> {
     try {
