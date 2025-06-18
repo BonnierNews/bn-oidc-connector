@@ -1,7 +1,8 @@
 // import { type Request, type Response } from "express";
-// import nock from "nock";
+import nock from "nock";
 
 import { auth, type OidcClientConfig } from "../../index";
+import { initialize } from "../../lib/middleware";
 
 // import { handleCallback } from "../../lib/callback";
 // import { handleLogin } from "../../lib/login";
@@ -31,30 +32,35 @@ Feature("Setup", () => {
     });
   });
 
-  // Scenario("Middleware fails initialization", () => {
-  //   Given("the OIDC provider cannot be reached", () => {
-  //     nock(issuerBaseURL)
-  //       .get("/oauth/.well-known/openid-configuration")
-  //       .times(1)
-  //       .reply(404);
-  //   });
+  Scenario("Middleware fails initialization", () => {
+    const clientId = "test-client-id";
+    const issuerBaseURL = "https://oidc.test";
+    const baseURL = "http://test.example";
 
-  //   let initializationError: Error;
-  //   When("initializing the middleware", async () => {
-  //     try {
-  //       await createAppWithMiddleware({
-  //         clientId,
-  //         issuerBaseURL: new URL(issuerBaseURL),
-  //         baseURL: new URL(baseURL),
-  //         scopes: [ "profile", "email", "entitlements", "offline_access" ],
-  //       });
-  //     } catch (error) {
-  //       initializationError = error as Error;
-  //     }
-  //   });
+    Given("the OIDC provider cannot be reached", () => {
+      nock(issuerBaseURL)
+        .get("/oauth/.well-known/openid-configuration")
+        .times(1)
+        .reply(404);
+    });
 
-  //   Then("the error is thrown", () => {
-  //     expect(initializationError).to.be.an.instanceOf(Error);
-  //   });
-  // });
+    let initializationError: Error;
+    When("initializing the middleware", async () => {
+      try {
+        await initialize({
+          clientId,
+          issuerBaseURL: new URL(issuerBaseURL),
+          baseURL: new URL(baseURL),
+          scopes: [ "profile", "email", "entitlements", "offline_access" ],
+        });
+      } catch (error) {
+        initializationError = error as Error;
+      }
+    });
+
+    Then("the error is thrown", () => {
+      expect(initializationError).to.be.an.instanceOf(Error);
+      expect(initializationError.message).to.include("ID service responded with 404");
+    });
+  });
 });

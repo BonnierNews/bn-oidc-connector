@@ -50,24 +50,7 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
     throw new Error("OIDC client config is missing required parameters");
   }
 
-  async function initialize(): Promise<void> {
-    try {
-      const response = await fetch(new URL(
-        "oauth/.well-known/openid-configuration",
-        clientConfig.issuerBaseURL.toString()
-      ));
-
-      if (!response.ok) {
-        throw new Error(`ID service responded with ${response.status}`);
-      }
-
-      wellKnownConfig = await response.json();
-    } catch (error) {
-      throw new Error(`OIDC discovery failed: ${(error as Error).message}`);
-    }
-  }
-
-  const initializePromise = initialize();
+  const initializePromise = initialize(clientConfig);
 
   const getContext = (): Context => ({
     clientConfig,
@@ -84,7 +67,7 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
   const oidcClientMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Ensure the OIDC provider is initialized before proceeding
-      await initializePromise;
+      wellKnownConfig = await initializePromise;
 
       if (!clientConfig || !wellKnownConfig) {
         // TODO: Throw error instead?
@@ -139,4 +122,21 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
   return router;
 }
 
-export { createOidcMiddleware };
+async function initialize(clientConfig: OidcClientConfig): Promise<OidcWellKnownConfig> {
+  try {
+    const response = await fetch(new URL(
+      "oauth/.well-known/openid-configuration",
+      clientConfig.issuerBaseURL.toString()
+    ));
+
+    if (!response.ok) {
+      throw new Error(`ID service responded with ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw new Error(`OIDC discovery failed: ${(error as Error).message}`);
+  }
+}
+
+export { createOidcMiddleware, initialize };
