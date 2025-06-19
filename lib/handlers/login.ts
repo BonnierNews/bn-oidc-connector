@@ -1,12 +1,34 @@
 import { type Response } from "express";
 
-import type { Context, LoginOptions } from "../types";
+import type { AuthorizationUrlOptions, Context, LoginOptions } from "../types";
 import {
   generateCodeChallenge,
   generateCodeVerifier,
   generateNonce,
   generateState,
 } from "../utils/crypto";
+
+const generateAuthorizationUrl = (options: AuthorizationUrlOptions): URL => {
+  const params = new URLSearchParams({
+    client_id: options.clientId,
+    response_type: "code",
+    scope: options.scopes.join(" "),
+    redirect_uri: options.redirectUri.toString(),
+    state: options.state,
+    nonce: options.nonce,
+    code_challenge: options.codeChallenge,
+    code_challenge_method: options.codeChallengeMethod,
+  });
+
+  if (options.prompts.length > 0) {
+    params.set("prompt", options.prompts.join(" "));
+  }
+
+  const authorizationUrl = new URL(options.authorizationEndpoint);
+  authorizationUrl.search = params.toString();
+
+  return authorizationUrl;
+};
 
 function login(
   { clientConfig, wellKnownConfig }: Context,
@@ -39,23 +61,17 @@ function login(
     expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
   });
 
-  const params = new URLSearchParams({
-    client_id: clientConfig.clientId,
-    response_type: "code",
-    scope: scopes.join(" "),
-    redirect_uri: redirectUri.toString(),
+  const authorizationUrl = generateAuthorizationUrl({
+    clientId: clientConfig.clientId,
+    authorizationEndpoint: wellKnownConfig.authorization_endpoint,
+    scopes,
+    redirectUri,
     state,
     nonce,
-    code_challenge: codeChallenge,
-    code_challenge_method: "S256",
+    codeChallenge,
+    codeChallengeMethod: "S256",
+    prompts,
   });
-
-  if (prompts.length > 0) {
-    params.set("prompt", prompts.join(" "));
-  }
-
-  const authorizationUrl = new URL(wellKnownConfig.authorization_endpoint);
-  authorizationUrl.search = params.toString();
 
   res.redirect(authorizationUrl.toString());
 }

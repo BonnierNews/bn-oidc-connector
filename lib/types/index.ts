@@ -6,6 +6,18 @@ type LoginOptions = {
   prompts?: string[];
 };
 
+type AuthorizationUrlOptions = {
+  clientId: string;
+  authorizationEndpoint: string;
+  scopes: string[];
+  redirectUri: URL;
+  state: string;
+  nonce: string;
+  codeChallenge: string;
+  codeChallengeMethod: string;
+  prompts: string[];
+};
+
 type OidcClient = {
   login: (res: Response, options?: LoginOptions) => void;
   callback: (req: ExpressRequest, res: Response) => void;
@@ -54,6 +66,7 @@ declare module "express" {
 }
 
 export type {
+  AuthorizationUrlOptions,
   Context,
   LoginOptions,
   OidcClient,
