@@ -1,44 +1,18 @@
-import crypto from "crypto";
 import { type Response } from "express";
 
-import { getClientConfig, getWellKnownConfig } from "./middleware";
+import type { Context, LoginOptions } from "../types";
+import {
+  generateCodeChallenge,
+  generateCodeVerifier,
+  generateNonce,
+  generateState,
+} from "../utils/crypto";
 
-type LoginOptions = {
-  returnUri: string;
-  scopes?: Array<string>;
-  prompts?: Array<string>;
-};
-
-// Function to generate a random code verifier
-const generateCodeVerifier = () => {
-  return crypto
-    .randomBytes(32)
-    .toString("base64url")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-};
-
-// Function to generate a code challenge from the verifier
-const generateCodeChallenge = (verifier: string) => {
-  return crypto
-    .createHash("sha256")
-    .update(verifier)
-    .digest("base64url")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-};
-
-// Login handler
-const handleLogin = (res: Response, options: LoginOptions) => {
-  const clientConfig = getClientConfig();
-  const wellKnownConfig = getWellKnownConfig();
-
-  if (!clientConfig || !wellKnownConfig) {
-    throw new Error("Middleware must be initialized before calling login");
-  }
-
+function login(
+  { clientConfig, wellKnownConfig }: Context,
+  res: Response,
+  options: LoginOptions = {}
+): void {
   const scopes = Array.from(new Set([
     "openid",
     ...(clientConfig.scopes ?? []),
@@ -51,10 +25,10 @@ const handleLogin = (res: Response, options: LoginOptions) => {
 
   const redirectUri = new URL(clientConfig.baseURL.toString());
   redirectUri.pathname = clientConfig.callbackPath as string;
-  redirectUri.searchParams.set("return-uri", options.returnUri);
+  redirectUri.searchParams.set("return-uri", options.returnUri ?? "/");
 
-  const state = crypto.randomBytes(16).toString("hex");
-  const nonce = crypto.randomBytes(16).toString("hex");
+  const state = generateState();
+  const nonce = generateNonce();
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
 
@@ -84,6 +58,6 @@ const handleLogin = (res: Response, options: LoginOptions) => {
   authorizationUrl.search = params.toString();
 
   res.redirect(authorizationUrl.toString());
-};
+}
 
-export { handleLogin };
+export { login };

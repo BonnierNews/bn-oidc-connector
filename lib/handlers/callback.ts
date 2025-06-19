@@ -1,12 +1,9 @@
 import { type Request, type Response } from "express";
 
-import { getClientConfig, getWellKnownConfig } from "./middleware";
+import type { Context } from "../types";
 
 // Callback handler
-const handleCallback = async (req: Request, res: Response): Promise<void> => {
-  const clientConfig = getClientConfig();
-  const wellKnownConfig = getWellKnownConfig();
-
+async function callback({ clientConfig, wellKnownConfig }: Context, req: Request, res: Response): Promise<void> {
   if (!clientConfig || !wellKnownConfig) {
     throw new Error("Middleware must be initialized before calling callback");
   }
@@ -43,6 +40,6 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
   });
 
   res.redirect(returnUri as string);
-};
+}
 
-export { handleCallback };
+export { callback };
