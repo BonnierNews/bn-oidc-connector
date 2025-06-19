@@ -76,4 +76,4 @@ function login(
   res.redirect(authorizationUrl.toString());
 }
 
-export { login };
+export { login, generateAuthorizationUrl };

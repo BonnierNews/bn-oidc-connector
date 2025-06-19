@@ -54,6 +54,7 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
 
   const getContext = (): Context => ({
     clientConfig,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     wellKnownConfig: wellKnownConfig!,
   });
 
