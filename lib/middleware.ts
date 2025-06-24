@@ -15,7 +15,6 @@ import {
 } from "./handlers";
 import {
   Context,
-  LoginOptions,
   OidcClientConfig,
   OidcClient,
   OidcWellKnownConfig,
@@ -40,6 +39,10 @@ const configSchema = Joi.object({
   callbackPath: Joi.string().optional(),
   scopes: Joi.array().items(Joi.string()).optional(),
   prompts: Joi.array().items(Joi.string()).optional(),
+  cookies: Joi.object({
+    authParams: Joi.string().optional(),
+    tokens: Joi.string().optional(),
+  }).optional(),
 }).required();
 
 /**
@@ -64,7 +67,7 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
   const createOidcClient = (): OidcClient => ({
     login: (res, options) => login(getContext(), res as Response, options),
     callback: (req, res) => callback(getContext(), req as Request, res as Response),
-    refresh: (req, res) => refresh(getContext(), req as Request, res as Response),
+    refresh: async (req, res) => await refresh(getContext(), req as Request, res as Response),
     logout: (res) => logout(getContext(), res as Response),
   });
 
@@ -90,18 +93,24 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
     next();
   };
 
-  const oidcQueryParamsMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    // Check for query parameters to handle login
-    const { idlogin, ...queryParameters } = req.query as Record<string, string>;
+  const oidcQueryParamsMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+    const { idlogin, idrefresh, ...queryParameters } = req.query as Record<string, string>;
 
     if (idlogin) {
       const searchParams = new URLSearchParams(queryParameters);
-      const options: LoginOptions = {
+
+      req.oidc!.login(res, {
         returnUri: searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path,
         prompts: idlogin === "silent" ? [ "none" ] : [],
-      };
+      });
 
-      req.oidc!.login(res, options);
+      return;
+    }
+
+    if (idrefresh) {
+      await req.oidc!.refresh(req, res);
+
+      next();
 
       return;
     }

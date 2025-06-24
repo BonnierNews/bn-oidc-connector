@@ -1,9 +1,9 @@
 import { createOidcMiddleware } from "./lib/middleware";
-import type { OidcClientConfig } from "./lib/types";
+import type { LoginOptions, OidcClientConfig } from "./lib/types";
 
 function auth(config: OidcClientConfig) {
   return createOidcMiddleware(config);
 }
 
 // TODO: Remove OidcClient export if not needed
-export { auth, type OidcClientConfig };
+export { auth, type LoginOptions, type OidcClientConfig };

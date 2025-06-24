@@ -94,9 +94,9 @@ Feature("Login", () => {
       const parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
       expect(parsedSetCookieHeader.bnoidctokens).to.exist;
       expect(parsedSetCookieHeader.bnoidctokens).to.include({
-        access_token: "test-access-token",
-        refresh_token: "test-refresh-token",
-        id_token: "test-id-token",
+        accessToken: "test-access-token",
+        refreshToken: "test-refresh-token",
+        idToken: "test-id-token",
       });
     });
   });
@@ -120,7 +120,7 @@ Feature("Login", () => {
         });
     });
 
-    When("client navigates to a URL with autologin query parameter", async () => {
+    When("client navigates to a URL with idlogin query parameter", async () => {
       loginResponse = await request(app).get("/some-path?idlogin=true&otherParam=value");
       cookies = loginResponse.header["set-cookie"];
     });
