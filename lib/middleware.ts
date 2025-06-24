@@ -26,6 +26,10 @@ const defaults: Partial<OidcClientConfig> = {
   callbackPath: "/id/callback",
   scopes: [ "openid", "entitlements", "offline_access" ],
   prompts: [], // TODO: Should we have any default prompts?
+  cookies: {
+    authParams: "bnoidcauthparams",
+    tokens: "bnoidctokens",
+  },
 };
 
 const configSchema = Joi.object({

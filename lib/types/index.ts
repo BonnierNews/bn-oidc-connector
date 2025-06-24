@@ -25,6 +25,10 @@ type OidcClientConfig = {
   locale?: string; // Locale to override the OIDC provider app default locale
   scopes?: string[]; // Scopes to request during login, defaults to ["openid", "profile", "email", "entitlements", "offline_access"]
   prompts?: string[]; // Custom prompts to add to the login request
+  cookies?: {
+    authParams: string,
+    tokens: string,
+  }
 };
 
 type OidcWellKnownConfig = {
