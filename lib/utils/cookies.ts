@@ -1,4 +1,4 @@
-import type { Response } from "express";
+import type { Request, Response } from "express";
 
 import type { OidcClientConfig, TokenSet } from "../types";
 
@@ -34,6 +34,13 @@ function setTokensCookie(
   });
 }
 
+function getTokensCookie(
+  { cookies }: OidcClientConfig,
+  req: Request
+): TokenSet {
+  return req.cookies[cookies!.tokens] || null;
+}
+
 function setCookie(
   res: Response,
   name: string,
@@ -56,4 +63,5 @@ function setCookie(
 export {
   setAuthParamsCookie,
   setTokensCookie,
+  getTokensCookie,
 };

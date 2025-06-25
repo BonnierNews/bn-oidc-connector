@@ -6,11 +6,16 @@ type LoginOptions = {
   prompts?: string[];
 };
 
+type LogoutOptions = {
+  returnUri?: string;
+};
+
 type OidcClient = {
   login: (res: Response, options?: LoginOptions) => void;
-  callback: (req: ExpressRequest, res: Response) => void;
+  loginCallback: (req: ExpressRequest, res: Response) => void;
+  logoutCallback: (req: ExpressRequest, res: Response) => void;
   refresh: (req: ExpressRequest, res: Response) => void;
-  logout: (res: Response) => void;
+  logout: (req: ExpressRequest, res: Response, options?: LogoutOptions) => void;
 };
 
 type OidcClientConfig = {
@@ -19,7 +24,8 @@ type OidcClientConfig = {
   issuerBaseURL: URL;
   baseURL: URL; // TODO: Better name?
   loginPath?: string; // Path to the login endpoint, defaults to "/id/login"
-  callbackPath?: string; // Path to the callback endpoint, defaults to "/id/callback"
+  loginCallbackPath?: string; // Path to the login callback endpoint, defaults to "/id/login/callback"
+  logoutCallbackPath?: string; // Path to the logout callback endpoint, defaults to "/id/logout/callback"
   logoutPath?: string; // Path to the logout endpoint, defaults to "/id/logout"
   cookieDomainURL?: URL; // Domain where cookies should be set. TODO: Should this be forced?
   locale?: string; // Locale to override the OIDC provider app default locale
@@ -67,6 +73,7 @@ declare module "express" {
 export type {
   Context,
   LoginOptions,
+  LogoutOptions,
   OidcClient,
   OidcClientConfig,
   OidcWellKnownConfig,
