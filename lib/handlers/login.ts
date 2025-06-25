@@ -1,6 +1,7 @@
 import { type Response } from "express";
 
 import type { Context, LoginOptions } from "../types";
+import { setAuthParamsCookie } from "../utils/cookies";
 import {
   generateCodeChallenge,
   generateCodeVerifier,
@@ -32,12 +33,7 @@ function login(
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
 
-  res.cookie("bnoidcauthparams", { nonce, state, codeVerifier }, {
-    domain: clientConfig.cookieDomain?.hostname ?? clientConfig.baseURL.hostname,
-    httpOnly: true,
-    secure: clientConfig.baseURL.protocol === "https:",
-    expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
-  });
+  setAuthParamsCookie(clientConfig, res, { state, nonce, codeVerifier });
 
   const params = new URLSearchParams({
     client_id: clientConfig.clientId,

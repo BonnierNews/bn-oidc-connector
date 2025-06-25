@@ -21,10 +21,14 @@ type OidcClientConfig = {
   loginPath?: string; // Path to the login endpoint, defaults to "/id/login"
   callbackPath?: string; // Path to the callback endpoint, defaults to "/id/callback"
   logoutPath?: string; // Path to the logout endpoint, defaults to "/id/logout"
-  cookieDomain?: URL; // Domain where cookies should be set. TODO: Should this be forced?
+  cookieDomainURL?: URL; // Domain where cookies should be set. TODO: Should this be forced?
   locale?: string; // Locale to override the OIDC provider app default locale
   scopes?: string[]; // Scopes to request during login, defaults to ["openid", "profile", "email", "entitlements", "offline_access"]
   prompts?: string[]; // Custom prompts to add to the login request
+  cookies?: {
+    authParams: string,
+    tokens: string,
+  }
 };
 
 type OidcWellKnownConfig = {
@@ -40,6 +44,13 @@ type OidcWellKnownConfig = {
   subject_types_supported: string[];
   id_token_signing_alg_values_supported: string[];
   ui_locales_supported: string[];
+};
+
+type TokenSet = {
+  accessToken: string;
+  refreshToken: string;
+  idToken: string;
+  expiresIn: number;
 };
 
 type Context = {
@@ -59,4 +70,5 @@ export type {
   OidcClient,
   OidcClientConfig,
   OidcWellKnownConfig,
+  TokenSet,
 };
