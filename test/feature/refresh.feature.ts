@@ -33,10 +33,6 @@ Feature("Refresh", () => {
     scopes: [ "profile", "email", "entitlements", "offline_access" ],
   });
 
-  app.route("/some-path").get((_, res) => {
-    res.send({ hehe: "haha" });
-  });
-
   Scenario("Refresh is initiated by a query parameter", () => {
     let refreshResponse: request.Response;
 
