@@ -1,7 +1,12 @@
 import type { Response, Request } from "express";
 
 import type { Context, LogoutOptions } from "../types";
-import { getTokensCookie, setLogoutCookie } from "../utils/cookies";
+import {
+  getTokensCookie,
+  setLogoutCookie,
+  unsetAuthParamsCookie,
+  unsetTokensCookie,
+} from "../utils/cookies";
 import { generateState } from "../utils/crypto";
 
 function logout(
@@ -28,9 +33,10 @@ function logout(
     params.set("id_token_hint", tokenSet.idToken);
   }
 
-  setLogoutCookie(clientConfig, res, state);
+  setLogoutCookie(clientConfig, res, { state });
 
-  // unsetLoginCookies(clientConfig, res);
+  unsetAuthParamsCookie(clientConfig, res);
+  unsetTokensCookie(clientConfig, res);
 
   const authorizationUrl = new URL(wellKnownConfig.end_session_endpoint);
   authorizationUrl.search = params.toString();

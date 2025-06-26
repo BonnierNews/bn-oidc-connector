@@ -1,6 +1,7 @@
 import request from "supertest";
 import nock from "nock";
 
+import { parseSetCookieHeader } from "../helpers/cookie-helper";
 import { createAppWithMiddleware } from "../helpers/app-helper";
 
 const clientId = "test-client-id";
@@ -35,6 +36,9 @@ Feature("Logout", () => {
 
   Scenario("User navigates to logout", () => {
     let logoutResponse: request.Response;
+    let callbackResponse: request.Response;
+    let cookies: string;
+    let state: string;
 
     Given("the OIDC provider can handle an OAuth token request", () => {
       nock(issuerBaseURL)
@@ -63,11 +67,55 @@ Feature("Logout", () => {
 
     Then("user is redirected to the OIDC provider for logout", () => {
       expect(logoutResponse.status).to.equal(302);
-      // const locationUrl = new URL(logoutResponse.header.location);
-      // expect(locationUrl.origin).to.equal(issuerBaseURL);
-      // expect(locationUrl.pathname).to.equal("/oauth/logout");
-      // expect(locationUrl.searchParams.get("client_id")).to.equal(clientId);
-      // expect(locationUrl.searchParams.get("post_logout_redirect_uri")).to.equal(`${baseURL}/id/logout/callback?return-uri=%2Ftest`);
+      const locationUrl = new URL(logoutResponse.header.location);
+      expect(locationUrl.origin).to.equal(issuerBaseURL);
+      expect(locationUrl.pathname).to.equal("/oauth/logout");
+      expect(locationUrl.searchParams.get("client_id")).to.equal(clientId);
+      expect(locationUrl.searchParams.get("post_logout_redirect_uri")).to.equal(`${baseURL}/id/logout/callback?return-uri=%2Ftest`);
+    });
+
+    let parsedSetCookieHeader: Record<string, any>;
+
+    And("logout cookie is set", () => {
+      parsedSetCookieHeader = parseSetCookieHeader(logoutResponse.header["set-cookie"]);
+      expect(parsedSetCookieHeader.bnoidclogout).to.exist;
+      expect(parsedSetCookieHeader.bnoidclogout).to.have.property("state");
+
+      cookies = logoutResponse.header["set-cookie"];
+      state = parsedSetCookieHeader.bnoidclogout.state;
+    });
+
+    And("the tokens cookie is unset", () => {
+      expect(parsedSetCookieHeader).to.have.property("bnoidctokens");
+      expect(parsedSetCookieHeader.bnoidctokens).to.be.a("null");
+    });
+
+    When("OIDC provider redirects back to the callback endpoint with incorrect state", async () => {
+      callbackResponse = await request(app)
+        .get("/id/logout/callback?return-uri=%2Ftest&state=incorrect-state")
+        .set("Cookie", cookies);
+    });
+
+    Then("user is redirected to /", () => {
+      expect(callbackResponse.status).to.equal(302);
+      expect(callbackResponse.header.location).to.equal("/");
+      parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
+      expect(parsedSetCookieHeader).to.have.property("bnoidclogout");
+      expect(parsedSetCookieHeader.bnoidclogout).to.be.a("null");
+    });
+
+    When("OIDC provider redirects back to the callback endpoint", async () => {
+      callbackResponse = await request(app)
+        .get(`/id/logout/callback?return-uri=%2Ftest&state=${state}`)
+        .set("Cookie", cookies);
+    });
+
+    Then("logout token is removed and user is redirected", () => {
+      expect(callbackResponse.status).to.equal(302);
+      expect(callbackResponse.header.location).to.equal("/test");
+      parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
+      expect(parsedSetCookieHeader).to.have.property("bnoidclogout");
+      expect(parsedSetCookieHeader.bnoidclogout).to.be.a("null");
     });
   });
 });

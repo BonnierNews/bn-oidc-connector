@@ -24,7 +24,9 @@ async function loginCallback({ clientConfig, wellKnownConfig }: Context, req: Re
   });
 
   setTokensCookie(clientConfig, res, tokens);
+
   unsetAuthParamsCookie(clientConfig, res);
+
   res.redirect(returnUri as string);
 }
 

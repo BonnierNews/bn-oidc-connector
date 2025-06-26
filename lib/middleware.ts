@@ -75,7 +75,7 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
   const createOidcClient = (): OidcClient => ({
     login: (res, options) => login(getContext(), res as Response, options),
     loginCallback: (req, res) => loginCallback(getContext(), req as Request, res as Response),
-    logoutCallback: (req, res) => logoutCallback(req as Request, res as Response),
+    logoutCallback: (req, res) => logoutCallback(getContext(), req as Request, res as Response),
     refresh: async (req, res) => await refresh(getContext(), req as Request, res as Response),
     logout: (req, res, options) => logout(getContext(), req as Request, res as Response, options),
   });
