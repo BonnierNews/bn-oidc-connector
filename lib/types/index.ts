@@ -34,6 +34,7 @@ type OidcClientConfig = {
   cookies?: {
     authParams: string,
     tokens: string,
+    logout: string,
   }
 };
 

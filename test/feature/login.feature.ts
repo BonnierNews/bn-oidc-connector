@@ -89,15 +89,22 @@ Feature("Login", () => {
         .set("Cookie", cookies);
     });
 
+    let parsedSetCookieHeader: Record<string, any>;
+
     Then("token cookie is set and user is redirected", () => {
       expect(callbackResponse.status).to.equal(302);
-      const parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
+      parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
       expect(parsedSetCookieHeader.bnoidctokens).to.exist;
       expect(parsedSetCookieHeader.bnoidctokens).to.include({
         accessToken: "test-access-token",
         refreshToken: "test-refresh-token",
         idToken: "test-id-token",
       });
+    });
+
+    And("authParams cookie is removed", () => {
+      expect(parsedSetCookieHeader).to.have.property("bnoidcauthparams");
+      expect(parsedSetCookieHeader.bnoidcauthparams).to.be.a("null");
     });
   });
 

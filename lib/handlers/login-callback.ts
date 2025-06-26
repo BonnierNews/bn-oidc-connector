@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 
 import type { Context, TokenSet } from "../types";
-import { setTokensCookie } from "../utils/cookies";
+import { setTokensCookie, unsetAuthParamsCookie } from "../utils/cookies";
 import { fetchTokensByAuthorizationCode } from "../utils/tokens";
 
 async function loginCallback({ clientConfig, wellKnownConfig }: Context, req: Request, res: Response): Promise<void> {
@@ -11,6 +11,7 @@ async function loginCallback({ clientConfig, wellKnownConfig }: Context, req: Re
 
   if (incomingState !== storedState) {
     res.status(400).send("Invalid state parameter");
+    // TODO: throw error
 
     return;
   }
@@ -23,7 +24,7 @@ async function loginCallback({ clientConfig, wellKnownConfig }: Context, req: Re
   });
 
   setTokensCookie(clientConfig, res, tokens);
-
+  unsetAuthParamsCookie(clientConfig, res);
   res.redirect(returnUri as string);
 }
 

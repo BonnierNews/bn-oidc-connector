@@ -20,6 +20,15 @@ function setAuthParamsCookie(
   });
 }
 
+function unsetAuthParamsCookie(
+  { baseURL, cookieDomainURL, cookies }: OidcClientConfig,
+  res: Response
+): void {
+  const cookieDomain = cookieDomainURL ?? baseURL;
+
+  res.clearCookie(cookies!.authParams, { domain: cookieDomain.hostname, secure: cookieDomain.protocol === "https:" });
+}
+
 function setTokensCookie(
   { baseURL, cookieDomainURL, cookies }: OidcClientConfig,
   res: Response,
@@ -37,8 +46,22 @@ function setTokensCookie(
 function getTokensCookie(
   { cookies }: OidcClientConfig,
   req: Request
-): TokenSet {
+): TokenSet | null {
   return req.cookies[cookies!.tokens] || null;
+}
+
+function setLogoutCookie(
+  { baseURL, cookieDomainURL, cookies }: OidcClientConfig,
+  res: Response,
+  state: string
+): void {
+  const cookieDomain = cookieDomainURL ?? baseURL;
+
+  setCookie(res, cookies!.logout, state, {
+    domain: cookieDomain.hostname,
+    secure: cookieDomain.protocol === "https:",
+    expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
+  });
 }
 
 function setCookie(
@@ -62,6 +85,8 @@ function setCookie(
 
 export {
   setAuthParamsCookie,
+  unsetAuthParamsCookie,
   setTokensCookie,
   getTokensCookie,
+  setLogoutCookie,
 };

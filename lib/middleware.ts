@@ -32,6 +32,7 @@ const defaults: Partial<OidcClientConfig> = {
   cookies: {
     authParams: "bnoidcauthparams",
     tokens: "bnoidctokens",
+    logout: "bnoidclogout",
   },
 };
 
@@ -48,6 +49,7 @@ const configSchema = Joi.object({
   cookies: Joi.object({
     authParams: Joi.string().optional(),
     tokens: Joi.string().optional(),
+    logout: Joi.string().optional(),
   }).optional(),
 }).required();
 
