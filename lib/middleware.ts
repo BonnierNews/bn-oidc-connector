@@ -6,9 +6,11 @@ import {
   type Response,
 } from "express";
 import Joi from "joi";
+import cookieParser from "cookie-parser";
 
 import {
-  callback,
+  loginCallback,
+  logoutCallback,
   login,
   logout,
   refresh,
@@ -22,12 +24,15 @@ import {
 
 const defaults: Partial<OidcClientConfig> = {
   loginPath: "/id/login",
-  callbackPath: "/id/callback",
+  logoutPath: "/id/logout",
+  loginCallbackPath: "/id/login/callback",
+  logoutCallbackPath: "/id/logout/callback",
   scopes: [ "openid", "entitlements", "offline_access" ],
   prompts: [], // TODO: Should we have any default prompts?
   cookies: {
     authParams: "bnoidcauthparams",
     tokens: "bnoidctokens",
+    logout: "bnoidclogout",
   },
 };
 
@@ -36,12 +41,15 @@ const configSchema = Joi.object({
   issuerBaseURL: Joi.object().instance(URL).required(),
   baseURL: Joi.object().instance(URL).required(),
   loginPath: Joi.string().optional(),
-  callbackPath: Joi.string().optional(),
+  logoutPath: Joi.string().optional(),
+  loginCallbackPath: Joi.string().optional(),
+  logoutCallbackPath: Joi.string().optional(),
   scopes: Joi.array().items(Joi.string()).optional(),
   prompts: Joi.array().items(Joi.string()).optional(),
   cookies: Joi.object({
     authParams: Joi.string().optional(),
     tokens: Joi.string().optional(),
+    logout: Joi.string().optional(),
   }).optional(),
 }).required();
 
@@ -66,9 +74,10 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
 
   const createOidcClient = (): OidcClient => ({
     login: (res, options) => login(getContext(), res as Response, options),
-    callback: (req, res) => callback(getContext(), req as Request, res as Response),
+    loginCallback: (req, res) => loginCallback(getContext(), req as Request, res as Response),
+    logoutCallback: (req, res) => logoutCallback(getContext(), req as Request, res as Response),
     refresh: async (req, res) => await refresh(getContext(), req as Request, res as Response),
-    logout: (res) => logout(getContext(), res as Response),
+    logout: (req, res, options) => logout(getContext(), req as Request, res as Response, options),
   });
 
   const oidcClientMiddleware = async (req: Request, res: Response, next: NextFunction) => {
@@ -119,7 +128,7 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
   };
 
   const router = createRouter();
-
+  router.use(cookieParser());
   router.use(oidcClientMiddleware);
   router.use(oidcQueryParamsMiddleware);
 
@@ -128,8 +137,17 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
     req.oidc!.login(res, { returnUri: req.query["return-uri"] as string ?? "/" });
   });
 
-  router.get(clientConfig.callbackPath as string, (req: Request, res: Response) => {
-    req.oidc!.callback(req, res);
+  router.get(clientConfig.logoutPath as string, (req: Request, res: Response) => {
+    // TODO: Remove fallback returnUri and get it from config in the login handler
+    req.oidc!.logout(req, res, { returnUri: req.query["return-uri"] as string ?? "/" });
+  });
+
+  router.get(clientConfig.loginCallbackPath as string, (req: Request, res: Response) => {
+    req.oidc!.loginCallback(req, res);
+  });
+
+  router.get(clientConfig.logoutCallbackPath as string, (req: Request, res: Response) => {
+    req.oidc!.logoutCallback(req, res);
   });
 
   return router;
