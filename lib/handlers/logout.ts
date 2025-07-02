@@ -1,9 +1,46 @@
-import type { Response } from "express";
+import type { Response, Request } from "express";
 
-import type { Context } from "../types";
+import type { Context, LogoutOptions } from "../types";
+import {
+  getTokensCookie,
+  setLogoutCookie,
+  unsetAuthParamsCookie,
+  unsetTokensCookie,
+} from "../utils/cookies";
+import { generateState } from "../utils/crypto";
 
-function logout({ clientConfig: _cc, wellKnownConfig: _wkc }: Context, _res: Response): void {
-  return;
+function logout(
+  { clientConfig, wellKnownConfig }: Context,
+  req: Request,
+  res: Response,
+  options: LogoutOptions = {}
+): void {
+  const redirectUri = new URL(clientConfig.baseURL.toString());
+  redirectUri.pathname = clientConfig.logoutCallbackPath as string;
+  redirectUri.searchParams.set("return-uri", options.returnUri ?? "/");
+
+  const tokenSet = getTokensCookie(clientConfig, req);
+  const state = generateState();
+
+  const params = new URLSearchParams({
+    client_id: clientConfig.clientId,
+    post_logout_redirect_uri: redirectUri.toString(),
+    state,
+  });
+
+  if (tokenSet?.idToken) {
+    params.set("id_token_hint", tokenSet.idToken);
+  }
+
+  setLogoutCookie(clientConfig, res, { state });
+
+  unsetAuthParamsCookie(clientConfig, res);
+  unsetTokensCookie(clientConfig, res);
+
+  const authorizationUrl = new URL(wellKnownConfig.end_session_endpoint);
+  authorizationUrl.search = params.toString();
+
+  return res.redirect(authorizationUrl.toString());
 }
 
 export { logout };

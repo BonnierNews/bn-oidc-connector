@@ -75,7 +75,7 @@ Feature("Login", () => {
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
       expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
-      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?return-uri=%2Ftest`);
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/login/callback?return-uri=%2Ftest`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
 
@@ -84,7 +84,7 @@ Feature("Login", () => {
 
     When("OIDC provider redirects back to the callback endpoint with incorrect state", async () => {
       callbackResponse = await request(app)
-        .get("/id/callback?code=test-auth-code&state=incorrect-state")
+        .get("/id/login/callback?code=test-auth-code&state=incorrect-state")
         .set("Cookie", cookies);
     });
 
@@ -94,19 +94,26 @@ Feature("Login", () => {
 
     When("OIDC provider redirects back to the callback endpoint", async () => {
       callbackResponse = await request(app)
-        .get(`/id/callback?code=test-auth-code&state=${state}`)
+        .get(`/id/login/callback?code=test-auth-code&state=${state}`)
         .set("Cookie", cookies);
     });
 
+    let parsedSetCookieHeader: Record<string, any>;
+
     Then("token cookie is set and user is redirected", () => {
       expect(callbackResponse.status).to.equal(302);
-      const parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
+      parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
       expect(parsedSetCookieHeader.bnoidctokens).to.exist;
       expect(parsedSetCookieHeader.bnoidctokens).to.include({
         accessToken: "test-access-token",
         refreshToken: "test-refresh-token",
         idToken,
       });
+    });
+
+    And("authParams cookie is removed", () => {
+      expect(parsedSetCookieHeader).to.have.property("bnoidcauthparams");
+      expect(parsedSetCookieHeader.bnoidcauthparams).to.be.a("null");
     });
   });
 
@@ -142,7 +149,7 @@ Feature("Login", () => {
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
       expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
-      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/callback?return-uri=%2Fsome-path%3FotherParam%3Dvalue`);
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/login/callback?return-uri=%2Fsome-path%3FotherParam%3Dvalue`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
 
@@ -151,13 +158,26 @@ Feature("Login", () => {
 
     When("OIDC provider redirects back to the callback endpoint", async () => {
       callbackResponse = await request(app)
-        .get(`/id/callback?code=test-auth-code&state=${state}`)
+        .get(`/id/login/callback?code=test-auth-code&state=${state}`)
         .set("Cookie", cookies);
     });
 
+    let parsedSetCookieHeader: Record<string, any>;
+
     Then("token cookie is set and user is redirected", () => {
       expect(callbackResponse.status).to.equal(302);
-      expect(callbackResponse.header["set-cookie"]).to.exist;
+      parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
+      expect(parsedSetCookieHeader.bnoidctokens).to.exist;
+      expect(parsedSetCookieHeader.bnoidctokens).to.include({
+        accessToken: "test-access-token",
+        refreshToken: "test-refresh-token",
+        idToken,
+      });
+    });
+
+    And("authParams cookie is removed", () => {
+      expect(parsedSetCookieHeader).to.have.property("bnoidcauthparams");
+      expect(parsedSetCookieHeader.bnoidcauthparams).to.be.a("null");
     });
   });
 });

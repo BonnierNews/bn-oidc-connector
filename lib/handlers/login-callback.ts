@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
 
 import type { Context, TokenSet } from "../types";
-import { setTokensCookie } from "../utils/cookies";
+import { setTokensCookie, unsetAuthParamsCookie } from "../utils/cookies";
 import { verifyJwt } from "../utils/jwt";
 import { fetchTokensByAuthorizationCode } from "../utils/tokens";
 
-async function callback(
+async function loginCallback(
   { clientConfig, wellKnownConfig, signingKeys }: Context,
   req: Request,
   res: Response
@@ -16,6 +16,7 @@ async function callback(
 
   if (incomingState !== storedState) {
     res.status(400).send("Invalid state parameter");
+    // TODO: throw error
 
     return;
   }
@@ -38,7 +39,9 @@ async function callback(
 
   setTokensCookie(clientConfig, res, tokens);
 
+  unsetAuthParamsCookie(clientConfig, res);
+
   res.redirect(returnUri as string);
 }
 
-export { callback };
+export { loginCallback };

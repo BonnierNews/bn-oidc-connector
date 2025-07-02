@@ -1,4 +1,4 @@
-import type { Response } from "express";
+import type { Request, Response } from "express";
 
 import type { OidcClientConfig, TokenSet } from "../types";
 
@@ -20,6 +20,18 @@ function setAuthParamsCookie(
   });
 }
 
+function unsetAuthParamsCookie(
+  { baseURL, cookieDomainURL, cookies }: OidcClientConfig,
+  res: Response
+): void {
+  const cookieDomain = cookieDomainURL ?? baseURL;
+
+  res.clearCookie(cookies!.authParams, {
+    domain: cookieDomain.hostname,
+    secure: cookieDomain.protocol === "https:",
+  });
+}
+
 function setTokensCookie(
   { baseURL, cookieDomainURL, cookies }: OidcClientConfig,
   res: Response,
@@ -34,22 +46,60 @@ function setTokensCookie(
   });
 }
 
+function unsetTokensCookie(
+  { baseURL, cookieDomainURL, cookies }: OidcClientConfig,
+  res: Response
+): void {
+  const cookieDomain = cookieDomainURL ?? baseURL;
+
+  res.clearCookie(cookies!.tokens, {
+    domain: cookieDomain.hostname,
+    secure: cookieDomain.protocol === "https:",
+  });
+}
+
 function getTokensCookie(
   { cookies }: OidcClientConfig,
-  req: { cookies: Record<string, any> }
+  req: Request
 ): TokenSet | null {
-  const tokens = req.cookies[cookies!.tokens];
+  return req.cookies[cookies!.tokens] || null;
+}
 
-  if (!tokens) {
-    return null;
+function setLogoutCookie(
+  { baseURL, cookieDomainURL, cookies }: OidcClientConfig,
+  res: Response,
+  options: {
+    state: string
   }
+): void {
+  const cookieDomain = cookieDomainURL ?? baseURL;
 
-  return {
-    accessToken: tokens.access_token,
-    idToken: tokens.id_token,
-    refreshToken: tokens.refresh_token,
-    expiresIn: tokens.expires_in,
-  };
+  setCookie(res, cookies!.logout, options, {
+    domain: cookieDomain.hostname,
+    secure: cookieDomain.protocol === "https:",
+    expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
+  });
+}
+
+function unsetLogoutCookie(
+  { baseURL, cookieDomainURL, cookies }: OidcClientConfig,
+  res: Response
+): void {
+  const cookieDomain = cookieDomainURL ?? baseURL;
+
+  res.clearCookie(cookies!.logout, {
+    domain: cookieDomain.hostname,
+    secure: cookieDomain.protocol === "https:",
+  });
+}
+
+function getLogoutCookie(
+  { cookies }: OidcClientConfig,
+  req: Request
+): {
+  state: string
+} | null {
+  return req.cookies[cookies!.logout] || null;
 }
 
 function setCookie(
@@ -72,7 +122,12 @@ function setCookie(
 }
 
 export {
-  setAuthParamsCookie,
-  setTokensCookie,
+  getLogoutCookie,
   getTokensCookie,
+  setAuthParamsCookie,
+  setLogoutCookie,
+  setTokensCookie,
+  unsetAuthParamsCookie,
+  unsetLogoutCookie,
+  unsetTokensCookie,
 };

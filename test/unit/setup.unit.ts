@@ -14,7 +14,7 @@ import { initialize } from "../../lib/middleware";
 
 Feature("Setup", () => {
   Scenario("Middleware is not initialized", () => {
-    let config;
+    let config : any;
     Given("config is missing required params", () => {
       config = {};
     });
