@@ -1,16 +1,29 @@
-import request from "supertest";
+import { readFileSync } from "fs";
 import nock from "nock";
+import { pem2jwk } from "pem-jwk";
+import request from "supertest";
 
 import { createAppWithMiddleware } from "../helpers/app-helper";
+import { generateIdToken } from "../helpers/id-token-helper";
 
 const clientId = "test-client-id";
 const issuerBaseURL = "https://oidc.test";
 const baseURL = "http://test.example";
 
 Feature("Refresh", () => {
+  const jwk = pem2jwk(readFileSync("test/helpers/public.pem", "utf8"));
+  const jwks = { keys: [ jwk ] };
+  const idToken = generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "10m" });
+  const cookieValue = `j:${JSON.stringify({
+    accessToken: "test-access-token",
+    idToken,
+    refreshToken: "test-refresh-token",
+    expiresIn: 600,
+  })}`;
+  const cookieString = `bnoidctokens=${encodeURIComponent(cookieValue)}`;
+
   nock(issuerBaseURL)
     .get("/oauth/.well-known/openid-configuration")
-    .times(1)
     .reply(200, {
       issuer: issuerBaseURL,
       authorization_endpoint: `${issuerBaseURL}/oauth/authorize`,
@@ -26,6 +39,10 @@ Feature("Refresh", () => {
       ui_locales_supported: [ "da-DK", "en-US", "fi-FI", "nl-NL", "nb-NO", "sv-SE" ],
     });
 
+  nock(issuerBaseURL)
+    .get("/oauth/jwks")
+    .reply(200, jwks);
+
   const app = createAppWithMiddleware({
     clientId,
     issuerBaseURL: new URL(issuerBaseURL),
@@ -39,23 +56,23 @@ Feature("Refresh", () => {
     Given("the OIDC provider can handle an OAuth token request", () => {
       nock(issuerBaseURL)
         .post("/oauth/token")
-        .times(1)
         .reply(200, {
           access_token: "test-access-token",
           refresh_token: "test-refresh-token",
           token_type: "Bearer",
           expires_in: 600,
-          id_token: "test-id-token",
+          id_token: idToken,
         });
     });
 
     When("client navigates to a URL with idrefresh query parameter", async () => {
       refreshResponse = await request(app)
         .get("/some-path?idrefresh=true&otherParam=value")
-        .set("Cookie", "bnoidctokens=j%3A%7B%22access_token%22%3A%22test-access-token%22%2C%22refresh_token%22%3A%22test-refresh-token%22%2C%22token_type%22%3A%22Bearer%22%2C%22expires_in%22%3A600%2C%22id_token%22%3A%22test-id-token%22%7D");
+        .set("Cookie", cookieString);
     });
 
     Then("token cookie is set", () => {
+      expect(refreshResponse.status).to.equal(404);
       expect(refreshResponse.header["set-cookie"]).to.exist;
     });
   });

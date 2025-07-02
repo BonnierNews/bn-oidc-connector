@@ -6,6 +6,7 @@ import {
   type Response,
 } from "express";
 import Joi from "joi";
+import jwksClient, { type JwksClient, type SigningKey } from "jwks-rsa";
 
 import {
   callback,
@@ -19,6 +20,8 @@ import {
   OidcClient,
   OidcWellKnownConfig,
 } from "./types";
+import { getTokensCookie } from "./utils/cookies";
+import { verifyJwt } from "./utils/jwt";
 
 const defaults: Partial<OidcClientConfig> = {
   loginPath: "/id/login",
@@ -52,6 +55,8 @@ const configSchema = Joi.object({
 function createOidcMiddleware(config: OidcClientConfig): Router {
   const clientConfig = { ...defaults, ...config };
   let wellKnownConfig: OidcWellKnownConfig | null = null;
+  let signingKeys: SigningKey[];
+
   const validation = configSchema.validate(clientConfig);
   if (validation.error) {
     throw new Error("OIDC client config is missing required parameters");
@@ -62,6 +67,7 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
   const getContext = (): Context => ({
     clientConfig,
     wellKnownConfig: wellKnownConfig!,
+    signingKeys,
   });
 
   const createOidcClient = (): OidcClient => ({
@@ -72,9 +78,9 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
   });
 
   const oidcClientMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+    // Ensure the OIDC provider is initialized before proceeding
     try {
-      // Ensure the OIDC provider is initialized before proceeding
-      wellKnownConfig = await initializePromise;
+      ({ wellKnownConfig, signingKeys } = await initializePromise);
 
       if (!clientConfig || !wellKnownConfig) {
         // TODO: Throw error instead?
@@ -93,6 +99,37 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
     next();
   };
 
+  const oidcTokensMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    // Ensure the OIDC provider is initialized before proceeding
+    if (!req.oidc) {
+      // TODO: Throw error instead?
+      res.status(500).send("OIDC client not initialized");
+
+      return;
+    }
+
+    // Attach tokens to the request object
+    const tokens = getTokensCookie(clientConfig, req);
+
+    // Verify ID token if present
+    if (tokens?.idToken) {
+      try {
+        const validIdToken = verifyJwt(tokens.idToken, signingKeys, {
+          issuer: wellKnownConfig!.issuer,
+          audience: clientConfig.clientId,
+        });
+        console.log({ validIdToken });
+      } catch (error) {
+        console.error("Failed to verify ID token:", error);
+        res.status(401).send("Invalid ID token");
+
+        return;
+      }
+    }
+
+    next();
+  };
+
   const oidcQueryParamsMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     const { idlogin, idrefresh, ...queryParameters } = req.query as Record<string, string>;
 
@@ -107,8 +144,8 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
       return;
     }
 
-    if (idrefresh) {
-      await req.oidc!.refresh(req, res);
+    if (idrefresh && req.oidc) {
+      await req.oidc.refresh(req, res);
 
       next();
 
@@ -121,6 +158,7 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
   const router = createRouter();
 
   router.use(oidcClientMiddleware);
+  router.use(oidcTokensMiddleware);
   router.use(oidcQueryParamsMiddleware);
 
   router.get(clientConfig.loginPath as string, (req: Request, res: Response) => {
@@ -135,8 +173,9 @@ function createOidcMiddleware(config: OidcClientConfig): Router {
   return router;
 }
 
-async function initialize(clientConfig: OidcClientConfig): Promise<OidcWellKnownConfig> {
+async function initialize(clientConfig: OidcClientConfig): Promise<Context> {
   try {
+    // Fetch OIDC well-known configuration
     const response = await fetch(new URL(
       "oauth/.well-known/openid-configuration",
       clientConfig.issuerBaseURL.toString()
@@ -146,7 +185,17 @@ async function initialize(clientConfig: OidcClientConfig): Promise<OidcWellKnown
       throw new Error(`ID service responded with ${response.status}`);
     }
 
-    return await response.json();
+    const wellKnownConfig: OidcWellKnownConfig = await response.json();
+
+    // Fetch JWKS
+    const client: JwksClient = jwksClient({
+      jwksUri: wellKnownConfig?.jwks_uri ?? "/oauth/jwks",
+      timeout: 5000,
+    });
+
+    const signingKeys = await client.getSigningKeys();
+
+    return { clientConfig, wellKnownConfig, signingKeys };
   } catch (error) {
     throw new Error(`OIDC discovery failed: ${(error as Error).message}`);
   }

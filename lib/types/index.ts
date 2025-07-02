@@ -1,4 +1,5 @@
-import { Request as ExpressRequest, Response } from "express";
+import type { Request as ExpressRequest, Response } from "express";
+import type { SigningKey } from "jwks-rsa";
 
 type LoginOptions = {
   returnUri?: string;
@@ -6,10 +7,15 @@ type LoginOptions = {
   prompts?: string[];
 };
 
+type VerifyOptions = {
+  issuer: string;
+  audience: string;
+};
+
 type OidcClient = {
   login: (res: Response, options?: LoginOptions) => void;
   callback: (req: ExpressRequest, res: Response) => void;
-  refresh: (req: ExpressRequest, res: Response) => void;
+  refresh: (req: ExpressRequest, res: Response) => Promise<void>;
   logout: (res: Response) => void;
 };
 
@@ -56,6 +62,7 @@ type TokenSet = {
 type Context = {
   clientConfig: OidcClientConfig;
   wellKnownConfig: OidcWellKnownConfig;
+  signingKeys: SigningKey[];
 };
 
 declare module "express" {
@@ -71,4 +78,5 @@ export type {
   OidcClientConfig,
   OidcWellKnownConfig,
   TokenSet,
+  VerifyOptions,
 };

@@ -34,6 +34,24 @@ function setTokensCookie(
   });
 }
 
+function getTokensCookie(
+  { cookies }: OidcClientConfig,
+  req: { cookies: Record<string, any> }
+): TokenSet | null {
+  const tokens = req.cookies[cookies!.tokens];
+
+  if (!tokens) {
+    return null;
+  }
+
+  return {
+    accessToken: tokens.access_token,
+    idToken: tokens.id_token,
+    refreshToken: tokens.refresh_token,
+    expiresIn: tokens.expires_in,
+  };
+}
+
 function setCookie(
   res: Response,
   name: string,
@@ -56,4 +74,5 @@ function setCookie(
 export {
   setAuthParamsCookie,
   setTokensCookie,
+  getTokensCookie,
 };
