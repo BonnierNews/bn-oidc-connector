@@ -1,4 +1,5 @@
-import { Request as ExpressRequest, Response } from "express";
+import type { Request as ExpressRequest, Response } from "express";
+import type { SigningKey } from "jwks-rsa";
 
 type LoginOptions = {
   returnUri?: string;
@@ -6,23 +7,20 @@ type LoginOptions = {
   prompts?: string[];
 };
 
-type LogoutOptions = {
-  returnUri?: string;
+type VerifyOptions = {
+  issuer: string;
+  audience: string;
 };
 
-type OidcClient = {
-  login: (res: Response, options?: LoginOptions) => void;
-  loginCallback: (req: ExpressRequest, res: Response) => void;
-  logoutCallback: (req: ExpressRequest, res: Response) => void;
-  refresh: (req: ExpressRequest, res: Response) => void;
-  logout: (req: ExpressRequest, res: Response, options?: LogoutOptions) => void;
+type LogoutOptions = {
+  returnUri?: string;
 };
 
 type OidcClientConfig = {
   clientId: string;
   clientSecret?: string;
   issuerBaseURL: URL;
-  baseURL: URL; // TODO: Better name?
+  baseURL: URL;
   loginPath?: string; // Path to the login endpoint, defaults to "/id/login"
   loginCallbackPath?: string; // Path to the login callback endpoint, defaults to "/id/login/callback"
   logoutCallbackPath?: string; // Path to the logout callback endpoint, defaults to "/id/logout/callback"
@@ -63,6 +61,22 @@ type TokenSet = {
 type Context = {
   clientConfig: OidcClientConfig;
   wellKnownConfig: OidcWellKnownConfig;
+  signingKeys: SigningKey[];
+};
+
+type OidcClient = {
+  login: (res: Response, options?: LoginOptions) => void;
+  loginCallback: (req: ExpressRequest, res: Response) => void;
+  logout: (req: ExpressRequest, res: Response, options?: LogoutOptions) => void;
+  logoutCallback: (req: ExpressRequest, res: Response) => void;
+  refresh: (req: ExpressRequest, res: Response) => Promise<void>;
+  context: Context;
+  accessToken?: string;
+  refreshToken?: string;
+  idToken?: string;
+  expiresIn?: number;
+  idTokenClaims?: Record<string, any>;
+  isAuthenticated?: boolean;
 };
 
 declare module "express" {
@@ -79,4 +93,5 @@ export type {
   OidcClientConfig,
   OidcWellKnownConfig,
   TokenSet,
+  VerifyOptions,
 };

@@ -1,14 +1,20 @@
-import request from "supertest";
+import { readFileSync } from "fs";
 import nock from "nock";
+import { pem2jwk } from "pem-jwk";
+import request from "supertest";
 
-import { parseSetCookieHeader } from "../helpers/cookie-helper";
 import { createAppWithMiddleware } from "../helpers/app-helper";
+import { parseSetCookieHeader } from "../helpers/cookie-helper";
+import { generateIdToken } from "../helpers/id-token-helper";
 
 const clientId = "test-client-id";
 const issuerBaseURL = "https://oidc.test";
 const baseURL = "http://test.example";
 
 Feature("Logout", () => {
+  const jwk = pem2jwk(readFileSync("test/helpers/public.pem", "utf8"));
+  const jwks = { keys: [ jwk ] };
+
   nock(issuerBaseURL)
     .get("/oauth/.well-known/openid-configuration")
     .times(1)
@@ -27,6 +33,10 @@ Feature("Logout", () => {
       ui_locales_supported: [ "da-DK", "en-US", "fi-FI", "nl-NL", "nb-NO", "sv-SE" ],
     });
 
+  nock(issuerBaseURL)
+    .get("/oauth/jwks")
+    .reply(200, jwks);
+
   const app = createAppWithMiddleware({
     clientId,
     issuerBaseURL: new URL(issuerBaseURL),
@@ -38,31 +48,23 @@ Feature("Logout", () => {
     let logoutResponse: request.Response;
     let callbackResponse: request.Response;
     let cookies: string;
+    let cookieString: string;
     let state: string;
 
-    Given("the OIDC provider can handle an OAuth token request", () => {
-      nock(issuerBaseURL)
-        .post("/oauth/token")
-        .times(1)
-        .reply(200, {
-          access_token: "test-access-token",
-          refresh_token: "test-refresh-token",
-          token_type: "Bearer",
-          expires_in: 600,
-          id_token: "test-id-token",
-        });
+    Given("the user is logged in with valid tokens", () => {
+      const idToken = generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "10m" });
+      const cookieValue = `j:${JSON.stringify({
+        accessToken: "test-access-token",
+        idToken,
+        refreshToken: "test-refresh-token",
+        expiresIn: 600,
+      })}`;
+      cookieString = `bnoidctokens=${encodeURIComponent(cookieValue)}`;
     });
 
-    And("User is logged in", async () => {
-      // Hack ensure user has loghed in by using refresh with setcookie in same request
-      await request(app)
-        .get("/some-path?idrefresh=true&otherParam=value")
-        .set("Cookie", "bnoidctokens=j%3A%7B%22access_token%22%3A%22test-access-token%22%2C%22refresh_token%22%3A%22test-refresh-token%22%2C%22token_type%22%3A%22Bearer%22%2C%22expires_in%22%3A600%2C%22id_token%22%3A%22test-id-token%22%7D");
-    });
-
-    When("when user navigates to /id/logout", async () => {
+    When("user navigates to /id/logout", async () => {
       logoutResponse = await request(app).get("/id/logout?return-uri=%2Ftest")
-        .set("Cookie", "bnoidctokens=j%3A%7B%22access_token%22%3A%22test-access-token%22%2C%22refresh_token%22%3A%22test-refresh-token%22%2C%22token_type%22%3A%22Bearer%22%2C%22expires_in%22%3A600%2C%22id_token%22%3A%22test-id-token%22%7D");
+        .set("Cookie", cookieString);
     });
 
     Then("user is redirected to the OIDC provider for logout", () => {

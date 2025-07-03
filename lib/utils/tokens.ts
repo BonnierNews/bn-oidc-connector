@@ -1,4 +1,4 @@
-import { OidcWellKnownConfig, TokenSet } from "../types";
+import type { OidcWellKnownConfig, TokenSet } from "../types";
 
 type FetchTokensByAuthorizationCodeOptions = {
   tokenEndpoint: OidcWellKnownConfig["token_endpoint"];
