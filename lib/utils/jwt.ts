@@ -14,6 +14,7 @@ function verifyJwt(token: string, signingKeys: SigningKey[], options: VerifyOpti
         audience: options.audience,
       });
     } catch (error) {
+      // TODO: Handle specific JWT errors
       if (error instanceof jwt.TokenExpiredError) {
         console.log("JWT verification failed: Token expired");
         throw error; // Re-throw to handle expired tokens specifically

@@ -9,19 +9,10 @@ import { generateIdToken } from "../helpers/id-token-helper";
 const clientId = "test-client-id";
 const issuerBaseURL = "https://oidc.test";
 const baseURL = "http://test.example";
+const jwk = pem2jwk(readFileSync("test/helpers/public.pem", "utf8"));
+const jwks = { keys: [ jwk ] };
 
 Feature("Refresh", () => {
-  const jwk = pem2jwk(readFileSync("test/helpers/public.pem", "utf8"));
-  const jwks = { keys: [ jwk ] };
-  const idToken = generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "10m" });
-  const cookieValue = `j:${JSON.stringify({
-    accessToken: "test-access-token",
-    idToken,
-    refreshToken: "test-refresh-token",
-    expiresIn: 600,
-  })}`;
-  const cookieString = `bnoidctokens=${encodeURIComponent(cookieValue)}`;
-
   nock(issuerBaseURL)
     .get("/oauth/.well-known/openid-configuration")
     .reply(200, {
@@ -51,6 +42,14 @@ Feature("Refresh", () => {
   });
 
   Scenario("Refresh is initiated by a query parameter", () => {
+    const idToken = generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "10m" });
+    const cookieValue = `j:${JSON.stringify({
+      accessToken: "test-access-token",
+      idToken,
+      refreshToken: "test-refresh-token",
+      expiresIn: 600,
+    })}`;
+    const cookieString = `bnoidctokens=${encodeURIComponent(cookieValue)}`;
     let refreshResponse: request.Response;
 
     Given("the OIDC provider can handle an OAuth token request", () => {
@@ -74,6 +73,47 @@ Feature("Refresh", () => {
     Then("token cookie is set", () => {
       expect(refreshResponse.status).to.equal(404);
       expect(refreshResponse.header["set-cookie"]).to.exist;
+    });
+  });
+
+  Scenario("Refresh is triggered by an expired ID token", () => {
+    const idToken = generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "0m" });
+    const cookieValue = `j:${JSON.stringify({
+      accessToken: "test-access-token",
+      idToken,
+      refreshToken: "test-refresh-token",
+      expiresIn: 600,
+    })}`;
+    const cookieString = `bnoidctokens=${encodeURIComponent(cookieValue)}`;
+    let somePathResponse: request.Response;
+
+    Given("the OIDC provider can handle an OAuth token request", () => {
+      nock(issuerBaseURL)
+        .post("/oauth/token")
+        .reply(200, {
+          access_token: "test-access-token",
+          refresh_token: "test-refresh-token",
+          token_type: "Bearer",
+          expires_in: 600,
+          id_token: generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "10m" }),
+        });
+    });
+
+    And("there is an endpoint that responds with 200", () => {
+      app.get("/random-path", (_req, res) => {
+        res.status(200).send("OK");
+      });
+    });
+
+    When("client navigates to a URL with idrefresh query parameter", async () => {
+      somePathResponse = await request(app)
+        .get("/random-path")
+        .set("Cookie", cookieString);
+    });
+
+    Then("token cookie is set", () => {
+      expect(somePathResponse.status).to.equal(200);
+      expect(somePathResponse.header["set-cookie"]).to.exist;
     });
   });
 });

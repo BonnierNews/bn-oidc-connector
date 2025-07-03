@@ -2,7 +2,7 @@
 import nock from "nock";
 
 import { auth, type OidcClientConfig } from "../../index";
-import { initialize } from "../../lib/middleware";
+import { initialize } from "../../lib/auth";
 
 // import { handleCallback } from "../../lib/callback";
 // import { handleLogin } from "../../lib/login";
