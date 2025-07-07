@@ -1,5 +1,4 @@
-export { loginCallback } from "./login-callback";
-export { logoutCallback } from "./logout-callback";
 export { login } from "./login";
+export { loginCallback } from "./login-callback";
 export { logout } from "./logout";
-export { refresh } from "./refresh";
+export { logoutCallback } from "./logout-callback";

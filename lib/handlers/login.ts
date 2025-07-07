@@ -1,6 +1,6 @@
-import { type Response } from "express";
+import type { Request, Response } from "express";
 
-import type { Context, LoginOptions } from "../types";
+import type { LoginOptions } from "../types";
 import { setAuthParamsCookie } from "../utils/cookies";
 import {
   generateCodeChallenge,
@@ -10,10 +10,11 @@ import {
 } from "../utils/crypto";
 
 function login(
-  { clientConfig, wellKnownConfig }: Context,
+  req: Request,
   res: Response,
   options: LoginOptions = {}
 ): void {
+  const { clientConfig, wellKnownConfig } = req.oidc.config;
   const scopes = Array.from(new Set([
     "openid",
     ...(clientConfig.scopes ?? []),

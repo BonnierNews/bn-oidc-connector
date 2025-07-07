@@ -1,4 +1,5 @@
-import { Request as ExpressRequest, Response } from "express";
+import type { Request as ExpressRequest, Response } from "express";
+import type { SigningKey } from "jwks-rsa";
 
 type LoginOptions = {
   returnUri?: string;
@@ -6,23 +7,23 @@ type LoginOptions = {
   prompts?: string[];
 };
 
+type VerifyOptions = {
+  issuer: string;
+  audience: string;
+};
+
 type LogoutOptions = {
   returnUri?: string;
 };
 
-type OidcClient = {
-  login: (res: Response, options?: LoginOptions) => void;
-  loginCallback: (req: ExpressRequest, res: Response) => void;
-  logoutCallback: (req: ExpressRequest, res: Response) => void;
-  refresh: (req: ExpressRequest, res: Response) => void;
-  logout: (req: ExpressRequest, res: Response, options?: LogoutOptions) => void;
-};
-
+// TODO: Create a type for the OIDC client configuration options sent in by the client
+//       and let this "complete" type extend it. That way, we only need to have truly
+//       optional properties as optional (like cookieDomainURL).
 type OidcClientConfig = {
   clientId: string;
   clientSecret?: string;
   issuerBaseURL: URL;
-  baseURL: URL; // TODO: Better name?
+  baseURL: URL;
   loginPath?: string; // Path to the login endpoint, defaults to "/id/login"
   loginCallbackPath?: string; // Path to the login callback endpoint, defaults to "/id/login/callback"
   logoutCallbackPath?: string; // Path to the logout callback endpoint, defaults to "/id/logout/callback"
@@ -60,23 +61,40 @@ type TokenSet = {
   expiresIn: number;
 };
 
-type Context = {
+type OidcConfig = {
   clientConfig: OidcClientConfig;
   wellKnownConfig: OidcWellKnownConfig;
+  signingKeys: SigningKey[];
 };
 
-declare module "express" {
+type OidcClient = {
+  login: (req: ExpressRequest, res: Response, options?: LoginOptions) => void;
+  loginCallback: (req: ExpressRequest, res: Response) => void;
+  logout: (req: ExpressRequest, res: Response, options?: LogoutOptions) => void;
+  logoutCallback: (req: ExpressRequest, res: Response) => void;
+  refresh: (req: ExpressRequest, res: Response) => Promise<void>;
+  config: OidcConfig;
+  accessToken?: string;
+  refreshToken?: string;
+  idToken?: string;
+  expiresIn?: number;
+  idTokenClaims?: Record<string, any>;
+  isAuthenticated?: boolean;
+};
+
+declare module "express-serve-static-core" {
   interface Request {
-    oidc?: OidcClient
+    oidc: OidcClient
   }
 }
 
 export type {
-  Context,
   LoginOptions,
   LogoutOptions,
   OidcClient,
   OidcClientConfig,
+  OidcConfig,
   OidcWellKnownConfig,
   TokenSet,
+  VerifyOptions,
 };

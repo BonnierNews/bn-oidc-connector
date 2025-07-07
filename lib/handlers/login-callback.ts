@@ -1,31 +1,49 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 
-import type { Context, TokenSet } from "../types";
+import type { TokenSet } from "../types";
 import { setTokensCookie, unsetAuthParamsCookie } from "../utils/cookies";
+import { verifyJwt } from "../utils/jwt";
 import { fetchTokensByAuthorizationCode } from "../utils/tokens";
 
-async function loginCallback({ clientConfig, wellKnownConfig }: Context, req: Request, res: Response): Promise<void> {
+async function loginCallback(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const { clientConfig, wellKnownConfig, signingKeys } = req.oidc.config;
   const { state: incomingState, code } = req.query as { state: string; code: string };
   const { state: storedState, codeVerifier } = req.cookies.bnoidcauthparams ?? {};
   const returnUri = req.query["return-uri"] ?? "/";
 
-  if (incomingState !== storedState) {
-    res.status(400).send("Invalid state parameter");
-    // TODO: throw error
+  try {
+    if (incomingState !== storedState) {
+      throw new Error("Invalid state parameter");
+    }
+
+    const tokens: TokenSet = await fetchTokensByAuthorizationCode({
+      tokenEndpoint: wellKnownConfig.token_endpoint,
+      clientId: clientConfig.clientId,
+      code,
+      codeVerifier,
+    });
+
+    const validJwt = verifyJwt(tokens.idToken, signingKeys, {
+      issuer: wellKnownConfig.issuer,
+      audience: clientConfig.clientId,
+    });
+
+    if (!validJwt) {
+      throw new Error("Failed to verify ID token");
+    }
+
+    setTokensCookie(clientConfig, res, tokens);
+  } catch (error) {
+    next(error);
 
     return;
+  } finally {
+    unsetAuthParamsCookie(clientConfig, res);
   }
-
-  const tokens: TokenSet = await fetchTokensByAuthorizationCode({
-    tokenEndpoint: wellKnownConfig.token_endpoint,
-    clientId: clientConfig.clientId,
-    code,
-    codeVerifier,
-  });
-
-  setTokensCookie(clientConfig, res, tokens);
-
-  unsetAuthParamsCookie(clientConfig, res);
 
   res.redirect(returnUri as string);
 }

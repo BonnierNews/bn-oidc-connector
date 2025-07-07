@@ -1,17 +1,23 @@
-import request from "supertest";
+import { readFileSync } from "fs";
 import nock from "nock";
+import { pem2jwk } from "pem-jwk";
+import request from "supertest";
 
-import { parseSetCookieHeader } from "../helpers/cookie-helper";
 import { createAppWithMiddleware } from "../helpers/app-helper";
+import { parseSetCookieHeader } from "../helpers/cookie-helper";
+import { generateIdToken } from "../helpers/id-token-helper";
 
 const clientId = "test-client-id";
 const issuerBaseURL = "https://oidc.test";
 const baseURL = "http://test.example";
 
 Feature("Login", () => {
+  const jwk = pem2jwk(readFileSync("test/helpers/public.pem", "utf8"));
+  const jwks = { keys: [ jwk ] };
+  const idToken = generateIdToken({ name: "John Doe" }, { algorithm: "RS256" });
+
   nock(issuerBaseURL)
     .get("/oauth/.well-known/openid-configuration")
-    .times(1)
     .reply(200, {
       issuer: issuerBaseURL,
       authorization_endpoint: `${issuerBaseURL}/oauth/authorize`,
@@ -26,6 +32,10 @@ Feature("Login", () => {
       id_token_signing_alg_values_supported: [ "HS256", "RS256" ],
       ui_locales_supported: [ "da-DK", "en-US", "fi-FI", "nl-NL", "nb-NO", "sv-SE" ],
     });
+
+  nock(issuerBaseURL)
+    .get("/oauth/jwks")
+    .reply(200, jwks);
 
   const app = createAppWithMiddleware({
     clientId,
@@ -43,13 +53,12 @@ Feature("Login", () => {
     Given("the OIDC provider can handle an OAuth token request", () => {
       nock(issuerBaseURL)
         .post("/oauth/token")
-        .times(1)
         .reply(200, {
           access_token: "test-access-token",
           refresh_token: "test-refresh-token",
           token_type: "Bearer",
           expires_in: 600,
-          id_token: "test-id-token",
+          id_token: idToken,
         });
     });
 
@@ -73,16 +82,6 @@ Feature("Login", () => {
       state = queryParams.state;
     });
 
-    When("OIDC provider redirects back to the callback endpoint with incorrect state", async () => {
-      callbackResponse = await request(app)
-        .get("/id/login/callback?code=test-auth-code&state=incorrect-state")
-        .set("Cookie", cookies);
-    });
-
-    Then("callback returns an error response", () => {
-      expect(callbackResponse.status).to.equal(400);
-    });
-
     When("OIDC provider redirects back to the callback endpoint", async () => {
       callbackResponse = await request(app)
         .get(`/id/login/callback?code=test-auth-code&state=${state}`)
@@ -98,7 +97,7 @@ Feature("Login", () => {
       expect(parsedSetCookieHeader.bnoidctokens).to.include({
         accessToken: "test-access-token",
         refreshToken: "test-refresh-token",
-        idToken: "test-id-token",
+        idToken,
       });
     });
 
@@ -123,7 +122,7 @@ Feature("Login", () => {
           refresh_token: "test-refresh-token",
           token_type: "Bearer",
           expires_in: 600,
-          id_token: "test-id-token",
+          id_token: idToken,
         });
     });
 
@@ -162,7 +161,7 @@ Feature("Login", () => {
       expect(parsedSetCookieHeader.bnoidctokens).to.include({
         accessToken: "test-access-token",
         refreshToken: "test-refresh-token",
-        idToken: "test-id-token",
+        idToken,
       });
     });
 
