@@ -16,6 +16,9 @@ type LogoutOptions = {
   returnUri?: string;
 };
 
+// TODO: Create a type for the OIDC client configuration options sent in by the client
+//       and let this "complete" type extend it. That way, we only need to have truly
+//       optional properties as optional (like cookieDomainURL).
 type OidcClientConfig = {
   clientId: string;
   clientSecret?: string;
@@ -58,19 +61,19 @@ type TokenSet = {
   expiresIn: number;
 };
 
-type Context = {
+type OidcConfig = {
   clientConfig: OidcClientConfig;
   wellKnownConfig: OidcWellKnownConfig;
   signingKeys: SigningKey[];
 };
 
 type OidcClient = {
-  login: (res: Response, options?: LoginOptions) => void;
+  login: (req: ExpressRequest, res: Response, options?: LoginOptions) => void;
   loginCallback: (req: ExpressRequest, res: Response) => void;
   logout: (req: ExpressRequest, res: Response, options?: LogoutOptions) => void;
   logoutCallback: (req: ExpressRequest, res: Response) => void;
   refresh: (req: ExpressRequest, res: Response) => Promise<void>;
-  context: Context;
+  config: OidcConfig;
   accessToken?: string;
   refreshToken?: string;
   idToken?: string;
@@ -79,18 +82,18 @@ type OidcClient = {
   isAuthenticated?: boolean;
 };
 
-declare module "express" {
+declare module "express-serve-static-core" {
   interface Request {
-    oidc?: OidcClient
+    oidc: OidcClient
   }
 }
 
 export type {
-  Context,
   LoginOptions,
   LogoutOptions,
   OidcClient,
   OidcClientConfig,
+  OidcConfig,
   OidcWellKnownConfig,
   TokenSet,
   VerifyOptions,

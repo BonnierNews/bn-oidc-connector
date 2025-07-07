@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import type { NextFunction, Request, Response } from "express";
 
 import { getTokensCookie } from "../utils/cookies";
 import {
@@ -6,28 +6,29 @@ import {
   logoutCallback,
   login,
   logout,
-  refresh,
 } from "../handlers";
-import { type Context, OidcClient } from "../types";
+import type { OidcConfig } from "../types";
+import { refreshTokens } from "../utils/refresh";
 
-function requestContext(getContext: () => Context) {
+function requestContext(getConfig: () => OidcConfig) {
   return (req: Request, _res: Response, next: NextFunction) => {
-    const { clientConfig } = getContext();
+    const { clientConfig } = getConfig();
     const tokens = getTokensCookie(clientConfig, req);
 
+    // TODO: Set the oidc object in the response object instead
     req.oidc = {
-      login: (response, options) => login(getContext(), response as Response, options),
-      loginCallback: (request, response) => loginCallback(getContext(), request as Request, response as Response),
-      logoutCallback: (request, response) => logoutCallback(getContext(), request as Request, response as Response),
-      refresh: async (request, response) => await refresh(getContext(), request as Request, response as Response),
-      logout: (request, response, options) => logout(getContext(), request as Request, response as Response, options),
-      context: getContext(),
+      login: (request, response, options) => login(request, response, options),
+      loginCallback: (request, response) => loginCallback(request, response, next),
+      logout: (request, response, options) => logout(request, response, options),
+      logoutCallback: (request, response) => logoutCallback(request, response),
+      refresh: async (request, response) => await refreshTokens(request, response),
+      config: getConfig(),
       accessToken: tokens?.accessToken,
       refreshToken: tokens?.refreshToken,
       idToken: tokens?.idToken,
       expiresIn: tokens?.expiresIn,
       isAuthenticated: false,
-    } as OidcClient;
+    };
 
     next();
   };

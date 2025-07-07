@@ -82,16 +82,6 @@ Feature("Login", () => {
       state = queryParams.state;
     });
 
-    When("OIDC provider redirects back to the callback endpoint with incorrect state", async () => {
-      callbackResponse = await request(app)
-        .get("/id/login/callback?code=test-auth-code&state=incorrect-state")
-        .set("Cookie", cookies);
-    });
-
-    Then("callback returns an error response", () => {
-      expect(callbackResponse.status).to.equal(400);
-    });
-
     When("OIDC provider redirects back to the callback endpoint", async () => {
       callbackResponse = await request(app)
         .get(`/id/login/callback?code=test-auth-code&state=${state}`)

@@ -1,6 +1,6 @@
 import type { Response, Request } from "express";
 
-import type { Context, LogoutOptions } from "../types";
+import type { LogoutOptions } from "../types";
 import {
   getTokensCookie,
   setLogoutCookie,
@@ -10,11 +10,11 @@ import {
 import { generateState } from "../utils/crypto";
 
 function logout(
-  { clientConfig, wellKnownConfig }: Context,
   req: Request,
   res: Response,
   options: LogoutOptions = {}
 ): void {
+  const { clientConfig, wellKnownConfig } = req.oidc.config;
   const redirectUri = new URL(clientConfig.baseURL.toString());
   redirectUri.pathname = clientConfig.logoutCallbackPath as string;
   redirectUri.searchParams.set("return-uri", options.returnUri ?? "/");

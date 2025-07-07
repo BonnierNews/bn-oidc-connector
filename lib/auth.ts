@@ -12,11 +12,11 @@ import cookieParser from "cookie-parser";
 import {
   queryParams,
   requestContext,
-  tokenValidation,
+  idToken,
 } from "./middleware";
 import {
-  Context,
   OidcClientConfig,
+  OidcConfig,
   OidcWellKnownConfig,
 } from "./types";
 
@@ -48,7 +48,7 @@ const configSchema = Joi.object({
     authParams: Joi.string().optional(),
     tokens: Joi.string().optional(),
     logout: Joi.string().optional(),
-  }).optional(),
+  }),
 }).required();
 
 /**
@@ -67,7 +67,7 @@ function auth(config: OidcClientConfig): Router {
 
   const initializePromise = initialize(clientConfig);
 
-  const getContext = (): Context => ({
+  const getConfig = (): OidcConfig => ({
     clientConfig,
     wellKnownConfig: wellKnownConfig!,
     signingKeys,
@@ -95,32 +95,32 @@ function auth(config: OidcClientConfig): Router {
 
   router.use(cookieParser());
   router.use(ensureInitialized);
-  router.use(requestContext(getContext));
-  router.use(tokenValidation);
+  router.use(requestContext(getConfig));
+  router.use(idToken);
   router.use(queryParams);
 
   router.get(clientConfig.loginPath as string, (req: Request, res: Response) => {
     // TODO: Remove fallback returnUri and get it from config in the login handler
-    req.oidc!.login(res, { returnUri: req.query["return-uri"] as string ?? "/" });
+    req.oidc.login(req, res, { returnUri: req.query["return-uri"] as string ?? "/" });
   });
 
   router.get(clientConfig.logoutPath as string, (req: Request, res: Response) => {
     // TODO: Remove fallback returnUri and get it from config in the login handler
-    req.oidc!.logout(req, res, { returnUri: req.query["return-uri"] as string ?? "/" });
+    req.oidc.logout(req, res, { returnUri: req.query["return-uri"] as string ?? "/" });
   });
 
   router.get(clientConfig.loginCallbackPath as string, (req: Request, res: Response) => {
-    req.oidc!.loginCallback(req, res);
+    req.oidc.loginCallback(req, res);
   });
 
   router.get(clientConfig.logoutCallbackPath as string, (req: Request, res: Response) => {
-    req.oidc!.logoutCallback(req, res);
+    req.oidc.logoutCallback(req, res);
   });
 
   return router;
 }
 
-async function initialize(clientConfig: OidcClientConfig): Promise<Context> {
+async function initialize(clientConfig: OidcClientConfig): Promise<OidcConfig> {
   try {
     // Fetch OIDC well-known configuration
     const response = await fetch(new URL(
