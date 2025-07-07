@@ -77,10 +77,8 @@ function auth(config: OidcClientConfig): Router {
     try {
       ({ wellKnownConfig, signingKeys } = await initializePromise);
 
-      if (!clientConfig || !wellKnownConfig) {
-        next(new Error("OIDC provider not initialized"));
-
-        return;
+      if (signingKeys.length === 0 || !wellKnownConfig) {
+        throw new Error("OIDC provider not initialized");
       }
     } catch (error) {
       next(error);

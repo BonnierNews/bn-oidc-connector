@@ -17,6 +17,7 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
         await req.oidc.refresh(req, res);
       } catch (refreshError) {
         // If the refresh fails, redirect to login
+        // TODO: look at how we can hahndle possible loops here when id-service is down without loggin out users in the case that the id-service is down??
         req.oidc.login(req, res, { returnUri: req.originalUrl });
 
         return;
