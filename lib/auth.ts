@@ -14,13 +14,17 @@ import {
   requestContext,
   idToken,
 } from "./middleware";
-import {
+import type {
+  AuthOptions,
   OidcClientConfig,
   OidcConfig,
   OidcWellKnownConfig,
 } from "./types";
 
-const defaults: Partial<OidcClientConfig> = {
+const defaultConfig: OidcClientConfig = {
+  clientId: "",
+  issuerBaseURL: new URL("https://example.com"),
+  baseURL: new URL("https://example.com"),
   loginPath: "/id/login",
   logoutPath: "/id/logout",
   loginCallbackPath: "/id/login/callback",
@@ -52,12 +56,15 @@ const configSchema = Joi.object({
 }).required();
 
 /**
- * Express middleware to be used to connect to Bonnier News OIDC provider and
- * register required routes.
+ * Express middleware to be used to connect to Bonnier News OIDC provider
+ * and register required routes.
  */
-function auth(config: OidcClientConfig): Router {
-  const clientConfig = { ...defaults, ...config };
-  let wellKnownConfig: OidcWellKnownConfig | null = null;
+function auth(options: AuthOptions): Router {
+  const clientConfig = {
+    ...defaultConfig,
+    ...options,
+  };
+  let wellKnownConfig: OidcWellKnownConfig;
   let signingKeys: SigningKey[];
 
   const validation = configSchema.validate(clientConfig);
@@ -69,7 +76,7 @@ function auth(config: OidcClientConfig): Router {
 
   const getConfig = (): OidcConfig => ({
     clientConfig,
-    wellKnownConfig: wellKnownConfig!,
+    wellKnownConfig,
     signingKeys,
   });
 

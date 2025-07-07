@@ -62,7 +62,17 @@ Feature("Setup", () => {
           clientId,
           issuerBaseURL: new URL(issuerBaseURL),
           baseURL: new URL(baseURL),
+          loginPath: "/id/login",
+          loginCallbackPath: "/id/login/callback",
+          logoutPath: "/id/logout",
+          logoutCallbackPath: "/id/logout/callback",
           scopes: [ "profile", "email", "entitlements", "offline_access" ],
+          prompts: [],
+          cookies: {
+            authParams: "bnoidcauthparams",
+            tokens: "bnoidctokens",
+            logout: "bnoidclogout",
+          },
         });
       } catch (error) {
         initializationError = error as Error;
