@@ -19,6 +19,7 @@ import {
   OidcConfig,
   OidcWellKnownConfig,
 } from "./types";
+import { InitOidcError, DiscoveryFailedError } from "./errors";
 
 const defaults: Partial<OidcClientConfig> = {
   loginPath: "/id/login",
@@ -62,7 +63,7 @@ function auth(config: OidcClientConfig): Router {
 
   const validation = configSchema.validate(clientConfig);
   if (validation.error) {
-    throw new Error("OIDC client config is missing required parameters");
+    throw new InitOidcError("OIDC client config is missing required parameters");
   }
 
   const initializePromise = initialize(clientConfig);
@@ -78,7 +79,7 @@ function auth(config: OidcClientConfig): Router {
       ({ wellKnownConfig, signingKeys } = await initializePromise);
 
       if (!clientConfig || !wellKnownConfig) {
-        next(new Error("OIDC provider not initialized"));
+        next(new InitOidcError("OIDC provider not initialized"));
 
         return;
       }
@@ -144,7 +145,7 @@ async function initialize(clientConfig: OidcClientConfig): Promise<OidcConfig> {
 
     return { clientConfig, wellKnownConfig, signingKeys };
   } catch (error) {
-    throw new Error(`OIDC discovery failed: ${(error as Error).message}`);
+    throw new DiscoveryFailedError(`OIDC discovery failed: ${(error as Error).message}`);
   }
 }
 
