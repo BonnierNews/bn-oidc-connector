@@ -4,7 +4,7 @@ function isUserEntitled(req: Request, validEntitlements: string[]): boolean {
   if (validEntitlements.length === 0) {
     return true;
   }
-  const userEntitlements = req.oidc.idTokenClaims ?? [];
+  const userEntitlements = req.oidc.idTokenClaims?.ent ?? [];
 
   return validEntitlements.some((entitlement) => userEntitlements.includes(entitlement));
 }

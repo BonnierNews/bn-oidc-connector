@@ -31,7 +31,7 @@ function decodeJwt(token: string, signingKeys: SigningKey[], options: VerifyOpti
     return null;
   }
 
-  return jwt.decode(token, { complete: true });
+  return jwt.decode(token);
 }
 
 export { decodeJwt, verifyJwt };

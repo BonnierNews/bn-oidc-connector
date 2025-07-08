@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 
+import { UnauthorizedError } from "../errors";
 import { isUserEntitled } from "../utils/claims";
 
 function isEntitled(validEntitlements: string[]) {
@@ -9,7 +10,7 @@ function isEntitled(validEntitlements: string[]) {
       return next();
     }
 
-    next(new Error(`User is not entitled to following entitlements: ${validEntitlements}`));
+    next(new UnauthorizedError(`User is not entitled to following entitlements: ${validEntitlements}`));
   };
 }
 
