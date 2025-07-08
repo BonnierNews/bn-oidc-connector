@@ -8,7 +8,7 @@ async function queryParams(req: Request, res: Response, next: NextFunction) {
 
     // TODO: Add support for login token
     req.oidc.login(req, res, {
-      returnUri: searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path,
+      returnPath: searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path,
       prompts: idlogin === "silent" ? [ "none" ] : [],
     });
 

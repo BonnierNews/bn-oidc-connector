@@ -17,7 +17,7 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
         await req.oidc.refresh(req, res);
       } catch (refreshError) {
         // If the refresh fails, redirect to login
-        req.oidc.login(req, res, { returnUri: req.originalUrl });
+        req.oidc.login(req, res, { returnPath: req.originalUrl });
 
         return;
       }
