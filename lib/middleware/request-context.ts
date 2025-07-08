@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 
 import { getTokensCookie } from "../utils/cookies";
+import { isUserEntitled } from "../utils/claims";
 import {
   loginCallback,
   logoutCallback,
@@ -22,6 +23,7 @@ function requestContext(getConfig: () => OidcConfig) {
       logout: (request, response, options) => logout(request, response, options),
       logoutCallback: (request, response) => logoutCallback(request, response),
       refresh: async (request, response) => await refreshTokens(request, response),
+      isEntitled: (request, validEntitlements) => isUserEntitled(request, validEntitlements),
       config: getConfig(),
       accessToken: tokens?.accessToken,
       refreshToken: tokens?.refreshToken,
