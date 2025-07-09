@@ -63,7 +63,7 @@ Feature("Login", () => {
     });
 
     When("user requests the login endpoint", async () => {
-      loginResponse = await request(app).get("/id/login?return-uri=%2Ftest");
+      loginResponse = await request(app).get("/id/login?return-path=%2Ftest");
       cookies = loginResponse.header["set-cookie"];
     });
 
@@ -75,7 +75,7 @@ Feature("Login", () => {
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
       expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
-      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/login/callback?return-uri=%2Ftest`);
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/login/callback?return-path=%2Ftest`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
 
@@ -139,7 +139,7 @@ Feature("Login", () => {
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
       expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
-      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/login/callback?return-uri=%2Fsome-path%3FotherParam%3Dvalue`);
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/login/callback?return-path=%2Fsome-path%3FotherParam%3Dvalue`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
 

@@ -21,7 +21,6 @@ function verifyJwt(token: string, signingKeys: SigningKey[], options: VerifyOpti
   }
 
   return false;
-  // throw new Error("Failed to verify ID token with any of the provided keys");
 }
 
 function decodeJwt(token: string, signingKeys: SigningKey[], options: VerifyOptions): any {

@@ -63,7 +63,7 @@ Feature("Logout", () => {
     });
 
     When("user navigates to /id/logout", async () => {
-      logoutResponse = await request(app).get("/id/logout?return-uri=%2Ftest")
+      logoutResponse = await request(app).get("/id/logout?return-path=%2Ftest")
         .set("Cookie", cookieString);
     });
 
@@ -73,7 +73,7 @@ Feature("Logout", () => {
       expect(locationUrl.origin).to.equal(issuerBaseURL);
       expect(locationUrl.pathname).to.equal("/oauth/logout");
       expect(locationUrl.searchParams.get("client_id")).to.equal(clientId);
-      expect(locationUrl.searchParams.get("post_logout_redirect_uri")).to.equal(`${baseURL}/id/logout/callback?return-uri=%2Ftest`);
+      expect(locationUrl.searchParams.get("post_logout_redirect_uri")).to.equal(`${baseURL}/id/logout/callback?return-path=%2Ftest`);
     });
 
     let parsedSetCookieHeader: Record<string, any>;
@@ -94,7 +94,7 @@ Feature("Logout", () => {
 
     When("OIDC provider redirects back to the callback endpoint with incorrect state", async () => {
       callbackResponse = await request(app)
-        .get("/id/logout/callback?return-uri=%2Ftest&state=incorrect-state")
+        .get("/id/logout/callback?return-path=%2Ftest&state=incorrect-state")
         .set("Cookie", cookies);
     });
 
@@ -108,7 +108,7 @@ Feature("Logout", () => {
 
     When("OIDC provider redirects back to the callback endpoint", async () => {
       callbackResponse = await request(app)
-        .get(`/id/logout/callback?return-uri=%2Ftest&state=${state}`)
+        .get(`/id/logout/callback?return-path=%2Ftest&state=${state}`)
         .set("Cookie", cookies);
     });
 

@@ -12,13 +12,13 @@ function logoutCallback(
 
   unsetLogoutCookie(clientConfig, res);
 
-  let returnUri = req.query["return-uri"] ?? "/";
+  let returnPath = req.query["return-path"] ?? "/";
 
   if (incomingState && incomingState !== storedState?.state) {
-    returnUri = "/";
+    returnPath = "/";
   }
 
-  res.redirect(returnUri as string);
+  res.redirect(returnPath as string);
 }
 
 export { logoutCallback };

@@ -108,13 +108,11 @@ function auth(options: AuthOptions): Router {
   router.use(queryParams);
 
   router.get(clientConfig.loginPath as string, (req: Request, res: Response) => {
-    // TODO: Remove fallback returnUri and get it from config in the login handler
-    req.oidc.login(req, res, { returnUri: req.query["return-uri"] as string ?? "/" });
+    req.oidc.login(req, res, req.query["return-path"] ? { returnPath: req.query["return-path"] as string } : {});
   });
 
   router.get(clientConfig.logoutPath as string, (req: Request, res: Response) => {
-    // TODO: Remove fallback returnUri and get it from config in the login handler
-    req.oidc.logout(req, res, { returnUri: req.query["return-uri"] as string ?? "/" });
+    req.oidc.logout(req, res, req.query["return-path"] ? { returnPath: req.query["return-path"] as string } : {});
   });
 
   router.get(clientConfig.loginCallbackPath as string, (req: Request, res: Response) => {

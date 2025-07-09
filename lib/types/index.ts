@@ -2,7 +2,7 @@ import type { Request as ExpressRequest, Response } from "express";
 import type { SigningKey } from "jwks-rsa";
 
 type LoginOptions = {
-  returnUri?: string;
+  returnPath?: string;
   scopes?: string[];
   prompts?: string[];
 };
@@ -13,7 +13,7 @@ type VerifyOptions = {
 };
 
 type LogoutOptions = {
-  returnUri?: string;
+  returnPath?: string;
 };
 
 type OidcClientConfig = {

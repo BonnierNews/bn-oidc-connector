@@ -14,7 +14,7 @@ async function loginCallback(
   const { clientConfig, wellKnownConfig, signingKeys } = req.oidc.config;
   const { state: incomingState, code } = req.query as { state: string; code: string };
   const { state: storedState, codeVerifier } = req.cookies.bnoidcauthparams ?? {};
-  const returnUri = req.query["return-uri"] ?? "/";
+  const returnPath = req.query["return-path"] ?? "/";
 
   try {
     if (incomingState !== storedState) {
@@ -46,7 +46,7 @@ async function loginCallback(
     unsetAuthParamsCookie(clientConfig, res);
   }
 
-  res.redirect(returnUri as string);
+  res.redirect(returnPath as string);
 }
 
 export { loginCallback };
