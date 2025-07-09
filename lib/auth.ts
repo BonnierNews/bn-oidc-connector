@@ -41,6 +41,7 @@ const defaultConfig: OidcClientConfig = {
 
 const configSchema = Joi.object({
   clientId: Joi.string().required(),
+  clientSecret: Joi.string().optional(),
   issuerBaseURL: Joi.object().instance(URL).required(),
   baseURL: Joi.object().instance(URL).required(),
   loginPath: Joi.string().optional(),

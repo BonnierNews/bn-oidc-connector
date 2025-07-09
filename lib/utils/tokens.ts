@@ -6,18 +6,29 @@ type FetchTokensByAuthorizationCodeOptions = {
   clientId: string;
   code: string;
   codeVerifier?: string; // Optional for PKCE
+  clientSecret?: string;
 };
 
 type FetchTokensByRefreshTokenOptions = {
   tokenEndpoint: string;
   clientId: string;
   refreshToken: string;
+  clientSecret?: string;
+};
+
+type FetchTokenOptions = {
+  grant_type: string;
+  client_id: string;
+  client_secret?: string;
+  code?: string;
+  refresh_token?: string;
+  code_verifier?: string;
 };
 
 async function fetchTokensByAuthorizationCode(
   options: FetchTokensByAuthorizationCodeOptions
 ): Promise<TokenSet> {
-  const params = {
+  const params : FetchTokenOptions = {
     grant_type: "authorization_code",
     client_id: options.clientId,
     code: options.code,
@@ -28,25 +39,30 @@ async function fetchTokensByAuthorizationCode(
     params.code_verifier = options.codeVerifier;
   }
 
+  if (options.clientSecret) {
+    params.client_secret = options.clientSecret;
+  }
+
   return await fetchTokens(options.tokenEndpoint, params);
 }
 
 async function fetchTokensByRefreshToken(
   options: FetchTokensByRefreshTokenOptions
 ): Promise<TokenSet> {
-  return await fetchTokens(options.tokenEndpoint, {
+  const params : FetchTokenOptions = {
     grant_type: "refresh_token",
     client_id: options.clientId,
     refresh_token: options.refreshToken,
-  });
+  };
+
+  if (options.clientSecret) {
+    params.client_secret = options.clientSecret;
+  }
+
+  return await fetchTokens(options.tokenEndpoint, params);
 }
 
-async function fetchTokens(tokenEndpoint: string, params: {
-  grant_type: string;
-  client_id: string;
-  code?: string;
-  refresh_token?: string;
-}): Promise<TokenSet> {
+async function fetchTokens(tokenEndpoint: string, params: FetchTokenOptions): Promise<TokenSet> {
   try {
     const response = await fetch(tokenEndpoint, {
       method: "POST",
