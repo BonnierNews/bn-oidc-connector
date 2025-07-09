@@ -13,7 +13,7 @@ function setAuthParamsCookie(
 ): void {
   const cookieDomain = cookieDomainURL ?? baseURL;
 
-  setCookie(res, cookies!.authParams, authParams, {
+  setCookie(res, cookies.authParams, authParams, {
     domain: cookieDomain.hostname,
     secure: cookieDomain.protocol === "https:",
     expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
@@ -26,7 +26,7 @@ function unsetAuthParamsCookie(
 ): void {
   const cookieDomain = cookieDomainURL ?? baseURL;
 
-  res.clearCookie(cookies!.authParams, {
+  res.clearCookie(cookies.authParams, {
     domain: cookieDomain.hostname,
     secure: cookieDomain.protocol === "https:",
   });
@@ -39,7 +39,7 @@ function setTokensCookie(
 ): void {
   const cookieDomain = cookieDomainURL ?? baseURL;
 
-  setCookie(res, cookies!.tokens, tokens, {
+  setCookie(res, cookies.tokens, tokens, {
     domain: cookieDomain.hostname,
     secure: cookieDomain.protocol === "https:",
     expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
@@ -52,7 +52,7 @@ function unsetTokensCookie(
 ): void {
   const cookieDomain = cookieDomainURL ?? baseURL;
 
-  res.clearCookie(cookies!.tokens, {
+  res.clearCookie(cookies.tokens, {
     domain: cookieDomain.hostname,
     secure: cookieDomain.protocol === "https:",
   });
@@ -62,7 +62,7 @@ function getTokensCookie(
   { cookies }: OidcClientConfig,
   req: Request
 ): TokenSet | null {
-  return req.cookies[cookies!.tokens] || null;
+  return req.cookies[cookies.tokens] || null;
 }
 
 function setLogoutCookie(
@@ -74,7 +74,7 @@ function setLogoutCookie(
 ): void {
   const cookieDomain = cookieDomainURL ?? baseURL;
 
-  setCookie(res, cookies!.logout, options, {
+  setCookie(res, cookies.logout, options, {
     domain: cookieDomain.hostname,
     secure: cookieDomain.protocol === "https:",
     expires: new Date(Date.now() + 1000 * 60 * 15), // 15 minutes
@@ -87,7 +87,7 @@ function unsetLogoutCookie(
 ): void {
   const cookieDomain = cookieDomainURL ?? baseURL;
 
-  res.clearCookie(cookies!.logout, {
+  res.clearCookie(cookies.logout, {
     domain: cookieDomain.hostname,
     secure: cookieDomain.protocol === "https:",
   });
@@ -99,7 +99,7 @@ function getLogoutCookie(
 ): {
   state: string
 } | null {
-  return req.cookies[cookies!.logout] || null;
+  return req.cookies[cookies.logout] || null;
 }
 
 function setCookie(

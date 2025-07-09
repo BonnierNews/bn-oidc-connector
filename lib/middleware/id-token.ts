@@ -12,12 +12,10 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
     });
 
     if (!decodedJwt) {
-      // If the ID token is invalid, try to refresh it
       try {
-        await req.oidc.refresh(req, res);
+        await res.oidc.refresh(req, res);
       } catch (RefreshRequestError) {
-        // If the refresh fails, redirect to login
-        req.oidc.login(req, res, { returnPath: req.originalUrl });
+        res.oidc.login(req, res, { returnPath: req.originalUrl });
 
         return;
       }
