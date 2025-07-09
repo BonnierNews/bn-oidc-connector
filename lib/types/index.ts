@@ -1,4 +1,4 @@
-import type { Request as ExpressRequest, Response } from "express";
+import type { Request as ExpressRequest, Response as ExpressResponse } from "express";
 import type { SigningKey } from "jwks-rsa";
 
 type LoginOptions = {
@@ -70,13 +70,7 @@ type OidcConfig = {
   signingKeys: SigningKey[];
 };
 
-type OidcClient = {
-  login: (req: ExpressRequest, res: Response, options?: LoginOptions) => void;
-  loginCallback: (req: ExpressRequest, res: Response) => void;
-  logout: (req: ExpressRequest, res: Response, options?: LogoutOptions) => void;
-  logoutCallback: (req: ExpressRequest, res: Response) => void;
-  refresh: (req: ExpressRequest, res: Response) => Promise<void>;
-  isEntitled: (req: ExpressRequest, validEntitlements: string[]) => boolean;
+type OidcRequestContext = {
   config: OidcConfig;
   accessToken?: string;
   refreshToken?: string;
@@ -86,9 +80,24 @@ type OidcClient = {
   isAuthenticated: boolean;
 };
 
+type OidcResponseContext = {
+  login: (req: ExpressRequest, res: ExpressResponse, options?: LoginOptions) => void;
+  loginCallback: (req: ExpressRequest, res: ExpressResponse) => void;
+  logout: (req: ExpressRequest, res: ExpressResponse, options?: LogoutOptions) => void;
+  logoutCallback: (req: ExpressRequest, res: ExpressResponse) => void;
+  refresh: (req: ExpressRequest, res: ExpressResponse) => Promise<void>;
+  isEntitled: (req: ExpressRequest, validEntitlements: string[]) => boolean;
+};
+
 declare module "express-serve-static-core" {
   interface Request {
-    oidc: OidcClient
+    oidc: OidcRequestContext;
+  }
+}
+
+declare module "express-serve-static-core" {
+  interface Response {
+    oidc: OidcResponseContext;
   }
 }
 
@@ -96,10 +105,11 @@ export type {
   AuthOptions,
   LoginOptions,
   LogoutOptions,
-  OidcClient,
   OidcClientConfig,
   OidcConfig,
   OidcWellKnownConfig,
+  OidcRequestContext,
+  OidcResponseContext,
   TokenSet,
   VerifyOptions,
 };

@@ -7,7 +7,7 @@ async function queryParams(req: Request, res: Response, next: NextFunction) {
     const searchParams = new URLSearchParams(queryParameters);
 
     // TODO: Add support for login token
-    req.oidc.login(req, res, {
+    res.oidc.login(req, res, {
       returnPath: searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path,
       prompts: idlogin === "silent" ? [ "none" ] : [],
     });
@@ -17,7 +17,7 @@ async function queryParams(req: Request, res: Response, next: NextFunction) {
 
   if (idrefresh) {
     try {
-      await req.oidc.refresh(req, res);
+      await res.oidc.refresh(req, res);
     } catch (error) {
       // TODO: Should this be handled or just continue?
     }

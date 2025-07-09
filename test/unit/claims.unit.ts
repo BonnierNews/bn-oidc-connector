@@ -1,12 +1,12 @@
 import { describe, it } from "node:test";
 import { type Request } from "express";
 
-import type { OidcClient } from "../../lib/types";
+import type { OidcRequestContext } from "../../lib/types";
 import { isUserEntitled } from "../../lib/utils/claims";
 
 describe("Claims", () => {
   const req = {} as Request;
-  req.oidc = {} as OidcClient;
+  req.oidc = {} as OidcRequestContext;
   req.oidc.idTokenClaims = { ent: [ "entitlement1" ] };
 
   it("user has required entitlements", () => {

@@ -11,7 +11,7 @@ import cookieParser from "cookie-parser";
 
 import {
   queryParams,
-  requestContext,
+  oidcContext,
   idToken,
 } from "./middleware";
 import type {
@@ -103,24 +103,24 @@ function auth(options: AuthOptions): Router {
 
   router.use(cookieParser());
   router.use(ensureInitialized);
-  router.use(requestContext(getConfig));
+  router.use(oidcContext(getConfig));
   router.use(idToken);
   router.use(queryParams);
 
   router.get(clientConfig.loginPath as string, (req: Request, res: Response) => {
-    req.oidc.login(req, res, req.query["return-path"] ? { returnPath: req.query["return-path"] as string } : {});
+    res.oidc.login(req, res, req.query["return-path"] ? { returnPath: req.query["return-path"] as string } : {});
   });
 
   router.get(clientConfig.logoutPath as string, (req: Request, res: Response) => {
-    req.oidc.logout(req, res, req.query["return-path"] ? { returnPath: req.query["return-path"] as string } : {});
+    res.oidc.logout(req, res, req.query["return-path"] ? { returnPath: req.query["return-path"] as string } : {});
   });
 
   router.get(clientConfig.loginCallbackPath as string, (req: Request, res: Response) => {
-    req.oidc.loginCallback(req, res);
+    res.oidc.loginCallback(req, res);
   });
 
   router.get(clientConfig.logoutCallbackPath as string, (req: Request, res: Response) => {
-    req.oidc.logoutCallback(req, res);
+    res.oidc.logoutCallback(req, res);
   });
 
   return router;
