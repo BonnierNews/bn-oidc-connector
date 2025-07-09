@@ -1,4 +1,4 @@
-# Node Starter App for TypeScript
+# Bonnier OIDC Connector
 
 ## Description
 
@@ -11,28 +11,23 @@ npm install @bonniernews/bn-oidc-connector
 ## Usage
 
 ```js
-import {
-  middleware as oidcMiddleware
-} from "@bonniernews/bn-oidc-connector";
+import { auth } from "@bonniernews/bn-oidc-connector";
 import express from "express";
 
 const app = express();
 const oidcConfig = {
-  client_id: "something secret"
+  clientId: YOUR_CLIENT_ID,
+  issuerBaseURL: new URL("https://bn-login-id-service-lab.bnu.bn.nr"),
+  baseURL: new URL(YOUR_APPS_BASE_URL),
+  scopes: [
+    "profile",
+    "email",
+    "entitlements",
+    "offline_access"
+  ]
 }
-app.use(oidcMiddleware(oidcConfig));
 
-app.get("/", async (req, res) => {
-  logger.info("Hello, world!");
-
-  // Propagate traceparent to other services
-  const response = await fetch("https://some.other.service.bn.nr/some/endpoint");
-  ...
-});
+app.use(auth(oidcConfig));
 ```
 
-The `middleware` should be put as early as possible, since only registers routes that will determine if user need to refresh...
-
-### Config
-
-Example of `config` object
+The `middleware` should be put as early as possible, since only registers routes that will determine if user need to refresh.
