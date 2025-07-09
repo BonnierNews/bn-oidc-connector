@@ -1,7 +1,6 @@
 export { auth } from "./lib/auth";
 export type {
+  AuthOptions,
   LoginOptions,
   LogoutOptions,
-  OidcClient,
-  OidcClientConfig,
 } from "./lib/types";

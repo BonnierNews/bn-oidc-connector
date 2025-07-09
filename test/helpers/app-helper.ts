@@ -1,6 +1,6 @@
 import express from "express";
 
-import { auth, type OidcClientConfig } from "../../index";
+import { auth, type AuthOptions } from "../../index";
 
 const createApp = () => {
   const app = express();
@@ -8,7 +8,7 @@ const createApp = () => {
   return app;
 };
 
-const createAppWithMiddleware = (clientConfig: OidcClientConfig) => {
+const createAppWithMiddleware = (clientConfig: AuthOptions) => {
   const app = createApp();
   app.use(auth(clientConfig));
   return app;
