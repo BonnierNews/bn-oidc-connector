@@ -64,10 +64,14 @@ async function fetchTokensByRefreshToken(
 
 async function fetchTokens(tokenEndpoint: string, params: FetchTokenOptions): Promise<TokenSet> {
   try {
+    if (params.client_secret) {
+      params.client_secret = encodeURIComponent(params.client_secret);
+    }
+
     const response = await fetch(tokenEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: encodeURIComponent(JSON.stringify(params)).toString(),
+      body: new URLSearchParams(params).toString(),
     });
 
     if (!response.ok) {
