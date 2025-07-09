@@ -15,7 +15,7 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
       // If the ID token is invalid, try to refresh it
       try {
         await req.oidc.refresh(req, res);
-      } catch (refreshError) {
+      } catch (RefreshRequestError) {
         // If the refresh fails, redirect to login
         req.oidc.login(req, res, { returnUri: req.originalUrl });
 

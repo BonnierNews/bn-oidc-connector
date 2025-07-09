@@ -1,5 +1,5 @@
 import type { OidcWellKnownConfig, TokenSet } from "../types";
-import { TokenError } from "../errors";
+import { TokenRequestError } from "../errors";
 
 type FetchTokensByAuthorizationCodeOptions = {
   tokenEndpoint: OidcWellKnownConfig["token_endpoint"];
@@ -67,7 +67,7 @@ async function fetchTokens(tokenEndpoint: string, params: {
       expiresIn: tokens.expires_in,
     };
   } catch (error) {
-    throw new TokenError(`OIDC token request failed: ${(error as Error).message}`);
+    throw new TokenRequestError(`OIDC token request failed: ${(error as Error).message}`);
   }
 }
 
