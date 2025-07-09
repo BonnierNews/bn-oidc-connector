@@ -4,7 +4,7 @@ import type { TokenSet } from "../types";
 import { InvalidStateError, InvalidIdTokenError } from "../errors";
 import { setTokensCookie, unsetAuthParamsCookie } from "../utils/cookies";
 import { verifyJwt } from "../utils/jwt";
-import { fetchTokensByAuthorizationCode } from "../utils/tokens";
+import { fetchTokensByAuthorizationCode, FetchTokensByAuthorizationCodeOptions } from "../utils/tokens";
 
 async function loginCallback(
   req: Request,
@@ -21,12 +21,20 @@ async function loginCallback(
       throw new InvalidStateError("Invalid state parameter");
     }
 
-    const tokens: TokenSet = await fetchTokensByAuthorizationCode({
+    const params : FetchTokensByAuthorizationCodeOptions = {
       tokenEndpoint: wellKnownConfig.token_endpoint,
       clientId: clientConfig.clientId,
       code,
-      codeVerifier,
-    });
+    };
+
+    if (clientConfig.clientSecret) {
+      params.clientSecret = clientConfig.clientSecret;
+    }
+    if (codeVerifier) {
+      params.codeVerifier = codeVerifier;
+    }
+
+    const tokens: TokenSet = await fetchTokensByAuthorizationCode(params);
 
     const validJwt = verifyJwt(tokens.idToken, signingKeys, {
       issuer: wellKnownConfig.issuer,

@@ -1,7 +1,7 @@
 import type { OidcWellKnownConfig, TokenSet } from "../types";
 import { TokenRequestError } from "../errors";
 
-type FetchTokensByAuthorizationCodeOptions = {
+export type FetchTokensByAuthorizationCodeOptions = {
   tokenEndpoint: OidcWellKnownConfig["token_endpoint"];
   clientId: string;
   code: string;
@@ -9,7 +9,7 @@ type FetchTokensByAuthorizationCodeOptions = {
   clientSecret?: string;
 };
 
-type FetchTokensByRefreshTokenOptions = {
+export type FetchTokensByRefreshTokenOptions = {
   tokenEndpoint: string;
   clientId: string;
   refreshToken: string;
@@ -67,7 +67,7 @@ async function fetchTokens(tokenEndpoint: string, params: FetchTokenOptions): Pr
     const response = await fetch(tokenEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(params).toString(),
+      body: encodeURIComponent(JSON.stringify(params)).toString(),
     });
 
     if (!response.ok) {

@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import { RefreshRequestError } from "../errors";
 import { setTokensCookie } from "./cookies";
 import { verifyJwt } from "./jwt";
-import { fetchTokensByRefreshToken } from "./tokens";
+import { fetchTokensByRefreshToken, FetchTokensByRefreshTokenOptions } from "./tokens";
 
 async function refreshTokens(
   req: Request,
@@ -18,11 +18,17 @@ async function refreshTokens(
       throw new Error("No refresh token found");
     }
 
-    const tokens = await fetchTokensByRefreshToken({
+    const params : FetchTokensByRefreshTokenOptions = {
       tokenEndpoint: wellKnownConfig.token_endpoint,
       clientId: clientConfig.clientId,
       refreshToken,
-    });
+    };
+
+    if (clientConfig.clientSecret) {
+      params.clientSecret = clientConfig.clientSecret;
+    }
+
+    const tokens = await fetchTokensByRefreshToken(params);
 
     const validJwt = verifyJwt(tokens.idToken, signingKeys, {
       issuer: wellKnownConfig.issuer,
