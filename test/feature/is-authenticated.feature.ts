@@ -48,7 +48,7 @@ Feature("is-authenticated middleware", () => {
 
   Scenario("protecting article", () => {
     Given("we have a protected route", () => {
-      app.get("/protected-article", isAuthenticated(), (_, res) => {
+      app.get("/protected-article", isAuthenticated, (_, res) => {
         return res.send(true);
       });
     });
