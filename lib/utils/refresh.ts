@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 
+import { RefreshRequestError } from "../errors";
 import { setTokensCookie } from "./cookies";
 import { verifyJwt } from "./jwt";
 import { fetchTokensByRefreshToken } from "./tokens";
@@ -34,7 +35,7 @@ async function refreshTokens(
 
     setTokensCookie(clientConfig, res, tokens);
   } catch (error) {
-    throw new Error(`Failed to refresh tokens: ${(error as Error).message.toLowerCase()}`);
+    throw new RefreshRequestError(`Failed to refresh tokens: ${(error as Error).message.toLowerCase()}`);
   }
 }
 

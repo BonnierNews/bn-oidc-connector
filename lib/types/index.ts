@@ -76,6 +76,7 @@ type OidcClient = {
   logout: (req: ExpressRequest, res: Response, options?: LogoutOptions) => void;
   logoutCallback: (req: ExpressRequest, res: Response) => void;
   refresh: (req: ExpressRequest, res: Response) => Promise<void>;
+  isEntitled: (req: ExpressRequest, validEntitlements: string[]) => boolean;
   config: OidcConfig;
   accessToken?: string;
   refreshToken?: string;

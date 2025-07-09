@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 
 import type { TokenSet } from "../types";
+import { InvalidStateError, InvalidIdTokenError } from "../errors";
 import { setTokensCookie, unsetAuthParamsCookie } from "../utils/cookies";
 import { verifyJwt } from "../utils/jwt";
 import { fetchTokensByAuthorizationCode } from "../utils/tokens";
@@ -17,7 +18,7 @@ async function loginCallback(
 
   try {
     if (incomingState !== storedState) {
-      throw new Error("Invalid state parameter");
+      throw new InvalidStateError("Invalid state parameter");
     }
 
     const tokens: TokenSet = await fetchTokensByAuthorizationCode({
@@ -33,7 +34,7 @@ async function loginCallback(
     });
 
     if (!validJwt) {
-      throw new Error("Failed to verify ID token");
+      throw new InvalidIdTokenError("Failed to verify ID token");
     }
 
     setTokensCookie(clientConfig, res, tokens);
