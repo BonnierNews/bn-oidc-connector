@@ -26,7 +26,7 @@ function login(
   ]));
 
   const redirectUri = new URL(clientConfig.baseURL.toString());
-  redirectUri.pathname = clientConfig.loginCallbackPath as string;
+  redirectUri.pathname = clientConfig.loginCallbackPath;
   redirectUri.searchParams.set("return-path", options.returnPath ?? "/");
 
   const state = generateState();

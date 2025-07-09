@@ -5,6 +5,7 @@ export type FetchTokensByAuthorizationCodeOptions = {
   tokenEndpoint: OidcWellKnownConfig["token_endpoint"];
   clientId: string;
   code: string;
+  redirectUri: URL;
   codeVerifier?: string; // Optional for PKCE
   clientSecret?: string;
 };
@@ -23,6 +24,7 @@ type FetchTokenOptions = {
   code?: string;
   refresh_token?: string;
   code_verifier?: string;
+  redirect_uri?: string;
 };
 
 async function fetchTokensByAuthorizationCode(
@@ -32,7 +34,7 @@ async function fetchTokensByAuthorizationCode(
     grant_type: "authorization_code",
     client_id: options.clientId,
     code: options.code,
-    code_verifier: options.codeVerifier,
+    redirect_uri: options.redirectUri.toString(),
   };
 
   if (options.codeVerifier) {
@@ -64,10 +66,6 @@ async function fetchTokensByRefreshToken(
 
 async function fetchTokens(tokenEndpoint: string, params: FetchTokenOptions): Promise<TokenSet> {
   try {
-    if (params.client_secret) {
-      params.client_secret = encodeURIComponent(params.client_secret);
-    }
-
     const response = await fetch(tokenEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
