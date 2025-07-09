@@ -16,28 +16,31 @@ type LogoutOptions = {
   returnUri?: string;
 };
 
-// TODO: Create a type for the OIDC client configuration options sent in by the client
-//       and let this "complete" type extend it. That way, we only need to have truly
-//       optional properties as optional (like cookieDomainURL).
 type OidcClientConfig = {
   clientId: string;
   clientSecret?: string;
   issuerBaseURL: URL;
   baseURL: URL;
-  loginPath?: string; // Path to the login endpoint, defaults to "/id/login"
-  loginCallbackPath?: string; // Path to the login callback endpoint, defaults to "/id/login/callback"
-  logoutCallbackPath?: string; // Path to the logout callback endpoint, defaults to "/id/logout/callback"
-  logoutPath?: string; // Path to the logout endpoint, defaults to "/id/logout"
+  loginPath: string; // Path to the login endpoint, defaults to "/id/login"
+  loginCallbackPath: string; // Path to the login callback endpoint, defaults to "/id/login/callback"
+  logoutPath: string; // Path to the logout endpoint, defaults to "/id/logout"
+  logoutCallbackPath: string; // Path to the logout callback endpoint, defaults to "/id/logout/callback"
   cookieDomainURL?: URL; // Domain where cookies should be set. TODO: Should this be forced?
   locale?: string; // Locale to override the OIDC provider app default locale
-  scopes?: string[]; // Scopes to request during login, defaults to ["openid", "profile", "email", "entitlements", "offline_access"]
-  prompts?: string[]; // Custom prompts to add to the login request
-  cookies?: {
+  scopes: string[]; // Scopes to request during login, defaults to ["openid", "profile", "email", "entitlements", "offline_access"]
+  prompts: string[]; // Custom prompts to add to the login request
+  cookies: {
     authParams: string,
     tokens: string,
     logout: string,
   }
 };
+
+type AuthOptions = Partial<OidcClientConfig> & {
+  clientId: string;
+  issuerBaseURL: URL;
+  baseURL: URL;
+}
 
 type OidcWellKnownConfig = {
   issuer: string;
@@ -80,7 +83,7 @@ type OidcClient = {
   idToken?: string;
   expiresIn?: number;
   idTokenClaims?: Record<string, any>;
-  isAuthenticated?: boolean;
+  isAuthenticated: boolean;
 };
 
 declare module "express-serve-static-core" {
@@ -90,6 +93,7 @@ declare module "express-serve-static-core" {
 }
 
 export type {
+  AuthOptions,
   LoginOptions,
   LogoutOptions,
   OidcClient,
