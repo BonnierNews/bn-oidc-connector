@@ -8,6 +8,7 @@ import { parseSetCookieHeader } from "../helpers/cookie-helper";
 import { generateIdToken } from "../helpers/id-token-helper";
 
 const clientId = "test-client-id";
+const clientSecret = "test-client-secret";
 const issuerBaseURL = "https://oidc.test";
 const baseURL = "http://test.example";
 
@@ -39,6 +40,7 @@ Feature("Login", () => {
 
   const app = createAppWithMiddleware({
     clientId,
+    clientSecret,
     issuerBaseURL: new URL(issuerBaseURL),
     baseURL: new URL(baseURL),
     scopes: [ "profile", "email", "entitlements", "offline_access" ],

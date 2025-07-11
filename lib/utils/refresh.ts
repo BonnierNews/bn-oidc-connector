@@ -18,7 +18,7 @@ async function refreshTokens(
       throw new Error("No refresh token found");
     }
 
-    const params : FetchTokensByRefreshTokenOptions = {
+    const params: FetchTokensByRefreshTokenOptions = {
       tokenEndpoint: wellKnownConfig.token_endpoint,
       clientId: clientConfig.clientId,
       refreshToken,
@@ -40,6 +40,12 @@ async function refreshTokens(
     }
 
     setTokensCookie(clientConfig, res, tokens);
+
+    // Update the request context with new tokens
+    req.oidc.accessToken = tokens.accessToken;
+    req.oidc.refreshToken = tokens.refreshToken;
+    req.oidc.idToken = tokens.idToken;
+    req.oidc.expiresIn = tokens.expiresIn;
   } catch (error) {
     throw new RefreshRequestError(`Failed to refresh tokens: ${(error as Error).message.toLowerCase()}`);
   }

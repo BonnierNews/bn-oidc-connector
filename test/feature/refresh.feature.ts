@@ -91,8 +91,8 @@ Feature("Refresh", () => {
       nock(issuerBaseURL)
         .post("/oauth/token")
         .reply(200, {
-          access_token: "test-access-token",
-          refresh_token: "test-refresh-token",
+          access_token: "new-test-access-token",
+          refresh_token: "new-test-refresh-token",
           token_type: "Bearer",
           expires_in: 600,
           id_token: generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "10m" }),
@@ -105,7 +105,7 @@ Feature("Refresh", () => {
       });
     });
 
-    When("client navigates to a URL with idrefresh query parameter", async () => {
+    When("client navigates to a URL with an expired ID token", async () => {
       somePathResponse = await request(app)
         .get("/random-path")
         .set("Cookie", cookieString);
