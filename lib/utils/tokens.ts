@@ -1,7 +1,7 @@
 import type { OidcWellKnownConfig, TokenSet } from "../types";
 import { TokenRequestError } from "../errors";
 
-export type FetchTokensByAuthorizationCodeOptions = {
+type FetchTokensByAuthorizationCodeOptions = {
   tokenEndpoint: OidcWellKnownConfig["token_endpoint"];
   clientId: string;
   code: string;
@@ -10,7 +10,7 @@ export type FetchTokensByAuthorizationCodeOptions = {
   clientSecret?: string;
 };
 
-export type FetchTokensByRefreshTokenOptions = {
+type FetchTokensByRefreshTokenOptions = {
   tokenEndpoint: string;
   clientId: string;
   refreshToken: string;
@@ -65,11 +65,21 @@ async function fetchTokensByRefreshToken(
 }
 
 async function fetchTokens(tokenEndpoint: string, params: FetchTokenOptions): Promise<TokenSet> {
+  const headers: Record<string, string> = { "Content-Type": "application/x-www-form-urlencoded" };
+  const bodyParams: Partial<FetchTokenOptions> = params;
+
+  if (params.client_id && params.client_secret) {
+    headers.Authorization = `Basic ${Buffer.from(`${params.client_id}:${params.client_secret}`).toString("base64")}`;
+
+    delete bodyParams.client_id;
+    delete bodyParams.client_secret;
+  }
+
   try {
     const response = await fetch(tokenEndpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(params).toString(),
+      headers,
+      body: new URLSearchParams(bodyParams).toString(),
     });
 
     if (!response.ok) {
@@ -90,6 +100,8 @@ async function fetchTokens(tokenEndpoint: string, params: FetchTokenOptions): Pr
 }
 
 export {
+  FetchTokensByAuthorizationCodeOptions,
+  FetchTokensByRefreshTokenOptions,
   fetchTokensByAuthorizationCode,
   fetchTokensByRefreshToken,
 };
