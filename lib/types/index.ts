@@ -5,6 +5,7 @@ type LoginOptions = {
   returnPath?: string;
   scopes?: string[];
   prompts?: string[];
+  locale?: string;
 };
 
 type VerifyOptions = {
@@ -78,6 +79,8 @@ type OidcRequestContext = {
   expiresIn?: number;
   idTokenClaims?: Record<string, any>;
   isAuthenticated: boolean;
+  isEntitled: (req: ExpressRequest, validEntitlements: string[]) => boolean;
+  user?: Record<string, string | number | boolean>;
 };
 
 type OidcResponseContext = {
@@ -86,7 +89,6 @@ type OidcResponseContext = {
   logout: (req: ExpressRequest, res: ExpressResponse, options?: LogoutOptions) => void;
   logoutCallback: (req: ExpressRequest, res: ExpressResponse) => void;
   refresh: (req: ExpressRequest, res: ExpressResponse) => Promise<void>;
-  isEntitled: (req: ExpressRequest, validEntitlements: string[]) => boolean;
 };
 
 declare module "express-serve-static-core" {

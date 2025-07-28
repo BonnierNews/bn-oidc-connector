@@ -23,6 +23,7 @@ function oidcContext(getConfig: () => OidcConfig) {
       idToken: tokens?.idToken,
       expiresIn: tokens?.expiresIn,
       isAuthenticated: false,
+      isEntitled: (request, validEntitlements) => isUserEntitled(request, validEntitlements),
     };
 
     res.oidc = {
@@ -31,7 +32,6 @@ function oidcContext(getConfig: () => OidcConfig) {
       logout: (request, response, options) => logout(request, response, options),
       logoutCallback: (request, response) => logoutCallback(request, response),
       refresh: async (request, response) => await refreshTokens(request, response),
-      isEntitled: (request, validEntitlements) => isUserEntitled(request, validEntitlements),
     };
 
     next();

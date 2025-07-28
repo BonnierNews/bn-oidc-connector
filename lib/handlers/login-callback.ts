@@ -35,6 +35,7 @@ async function loginCallback(
     if (clientConfig.clientSecret) {
       params.clientSecret = clientConfig.clientSecret;
     }
+
     if (codeVerifier) {
       params.codeVerifier = codeVerifier;
     }
