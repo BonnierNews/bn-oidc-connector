@@ -20,8 +20,8 @@ function login(
   const prompts = options.prompts ?? clientConfig.prompts;
 
   const redirectUri = new URL(clientConfig.baseURL.toString());
-  redirectUri.pathname = clientConfig.loginCallbackPath;
-  redirectUri.searchParams.set("return-path", options.returnPath ?? "/");
+  redirectUri.pathname = `${redirectUri.pathname.replace(/\/$/, "")}${clientConfig.loginCallbackPath}`;
+  redirectUri.searchParams.set("return-path", options.returnPath ?? clientConfig.baseURL.pathname);
 
   const state = generateState();
   const nonce = generateNonce();
