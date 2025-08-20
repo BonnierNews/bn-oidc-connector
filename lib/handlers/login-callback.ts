@@ -14,7 +14,7 @@ async function loginCallback(
   const { clientConfig, wellKnownConfig, signingKeys } = req.oidc.config;
   const { state: incomingState, code } = req.query as { state: string; code: string };
   const { state: storedState, codeVerifier } = req.cookies.bnoidcauthparams ?? {};
-  const returnPath: string = req.query["return-path"] as string ?? "/";
+  const returnPath: string = req.query["return-path"] as string ?? clientConfig.baseURL.pathname;
 
   try {
     if (incomingState !== storedState) {
