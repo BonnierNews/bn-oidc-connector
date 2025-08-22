@@ -122,13 +122,7 @@ function auth(options: AuthOptions): Router {
   });
 
   router.get(clientConfig.logoutCallbackPath as string, (req: Request, res: Response) => {
-    // Use client's custom logout callback if provided, otherwise use default
-    // if (clientConfig.clientLogoutCallback) {
-
-    //   clientConfig.clientLogoutCallback(req, res);
-    // } else {
     res.oidc.logoutCallback(req, res);
-    // }
   });
 
   return router;
