@@ -37,11 +37,20 @@ Feature("Logout", () => {
     .get("/oauth/jwks")
     .reply(200, jwks);
 
+  let customCallbackCalled = false;
+
   const app = createAppWithMiddleware({
     clientId,
     issuerBaseURL: new URL(issuerBaseURL),
     baseURL: new URL(baseURL),
     scopes: [ "profile", "email", "entitlements", "offline_access" ],
+    customPostLogoutCallback(req, res) {
+      if (req.query.post_logout_callback) {
+        res.redirect("/some-custom-redirect-path");
+        customCallbackCalled = true;
+      }
+      return;
+    },
   });
 
   Scenario("User navigates to logout", () => {
@@ -118,6 +127,23 @@ Feature("Logout", () => {
       parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
       expect(parsedSetCookieHeader).to.have.property("bnoidclogout");
       expect(parsedSetCookieHeader.bnoidclogout).to.be.a("null");
+    });
+
+    When("OIDC provider redirects back to the callback endpoint", async () => {
+      customCallbackCalled = false;
+      callbackResponse = await request(app)
+        .get(`/id/logout/callback?return-path=%2Ftest&state=${state}&post_logout_callback=true`)
+        .set("Cookie", cookies);
+    });
+
+    Then("logout token is removed and user is redirected", () => {
+      expect(customCallbackCalled).to.be.true;
+      expect(callbackResponse.status).to.equal(302);
+      expect(callbackResponse.header.location).to.equal("/some-custom-redirect-path");
+      parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
+      expect(parsedSetCookieHeader).to.have.property("bnoidclogout");
+      expect(parsedSetCookieHeader.bnoidclogout).to.be.a("null");
+
     });
   });
 });
