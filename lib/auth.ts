@@ -48,6 +48,7 @@ const configSchema = Joi.object({
   logoutPath: Joi.string().pattern(/^\//).optional(),
   loginCallbackPath: Joi.string().pattern(/^\//).optional(),
   logoutCallbackPath: Joi.string().pattern(/^\//).optional(),
+  customPostLogoutCallback: Joi.function().optional(),
   scopes: Joi.array().items(Joi.string()).optional(),
   prompts: Joi.array().items(Joi.string()).optional(),
   cookies: Joi.object({
@@ -121,7 +122,13 @@ function auth(options: AuthOptions): Router {
   });
 
   router.get(clientConfig.logoutCallbackPath as string, (req: Request, res: Response) => {
+    // Use client's custom logout callback if provided, otherwise use default
+    // if (clientConfig.clientLogoutCallback) {
+
+    //   clientConfig.clientLogoutCallback(req, res);
+    // } else {
     res.oidc.logoutCallback(req, res);
+    // }
   });
 
   return router;
