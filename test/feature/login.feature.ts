@@ -44,6 +44,12 @@ Feature("Login", () => {
     issuerBaseURL: new URL(issuerBaseURL),
     baseURL: new URL(baseURL),
     scopes: [ "profile", "email", "entitlements", "offline_access" ],
+    customPostLoginCallback: (req, res) => {
+      if(req.query["some_parameter"]) {
+            res.redirect("/somewhere");
+      }
+      return;
+    },
   });
 
   Scenario("Login is initiated by user clicking login button", () => {
@@ -150,7 +156,7 @@ Feature("Login", () => {
 
     When("OIDC provider redirects back to the callback endpoint", async () => {
       callbackResponse = await request(app)
-        .get(`/id/login/callback?code=test-auth-code&state=${state}`)
+        .get(`/id/login/callback?code=test-auth-code&state=${state}&some_parameter=true`)
         .set("Cookie", cookies);
     });
 

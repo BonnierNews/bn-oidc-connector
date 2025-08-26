@@ -17,13 +17,16 @@ function logoutCallback(
   if (incomingState && incomingState !== storedState?.state) {
     returnPath = "/";
     res.redirect(returnPath as string);
+    return; 
   }
 
   if (clientConfig.customPostLogoutCallback) {
     clientConfig.customPostLogoutCallback(req, res);
   }
 
-  res.redirect(returnPath as string);
+  if (!res.headersSent) {
+    res.redirect(returnPath as string);
+  }
 }
 
 export { logoutCallback };
