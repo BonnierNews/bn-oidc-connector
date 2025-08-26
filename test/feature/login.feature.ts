@@ -45,8 +45,8 @@ Feature("Login", () => {
     baseURL: new URL(baseURL),
     scopes: [ "profile", "email", "entitlements", "offline_access" ],
     customPostLoginCallback: (req, res) => {
-      if(req.query["some_parameter"]) {
-            res.redirect("/somewhere");
+      if (req.query.some_parameter) {
+        res.redirect("/somewhere");
       }
       return;
     },
