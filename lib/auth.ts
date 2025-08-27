@@ -62,7 +62,7 @@ const configSchema = Joi.object({
  * and register required routes.
  */
 function auth(options: AuthOptions): Router {
-  const clientConfig = {
+  const clientConfig: OidcClientConfig = {
     ...defaultConfig,
     ...options,
   };
@@ -108,19 +108,19 @@ function auth(options: AuthOptions): Router {
   router.use(idToken);
   router.use(queryParams);
 
-  router.get(clientConfig.loginPath as string, (req: Request, res: Response) => {
-    res.oidc.login(req, res, req.query["return-path"] ? { returnPath: req.query["return-path"] as string } : {});
+  router.get(clientConfig.loginPath, (req: Request, res: Response) => {
+    res.oidc.login(req, res, req.query["return-to"] ? { returnTo: req.query["return-to"] as string } : {});
   });
 
-  router.get(clientConfig.logoutPath as string, (req: Request, res: Response) => {
-    res.oidc.logout(req, res, req.query["return-path"] ? { returnPath: req.query["return-path"] as string } : {});
+  router.get(clientConfig.logoutPath, (req: Request, res: Response) => {
+    res.oidc.logout(req, res, req.query["return-to"] ? { returnTo: req.query["return-to"] as string } : {});
   });
 
-  router.get(clientConfig.loginCallbackPath as string, (req: Request, res: Response) => {
+  router.get(clientConfig.loginCallbackPath, (req: Request, res: Response) => {
     res.oidc.loginCallback(req, res);
   });
 
-  router.get(clientConfig.logoutCallbackPath as string, (req: Request, res: Response) => {
+  router.get(clientConfig.logoutCallbackPath, (req: Request, res: Response) => {
     res.oidc.logoutCallback(req, res);
   });
 

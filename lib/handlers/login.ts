@@ -21,7 +21,7 @@ function login(
 
   const redirectUri = new URL(clientConfig.baseURL.toString());
   redirectUri.pathname = `${redirectUri.pathname.replace(/\/$/, "")}${clientConfig.loginCallbackPath}`;
-  redirectUri.searchParams.set("return-path", options.returnPath ?? clientConfig.baseURL.pathname);
+  redirectUri.searchParams.set("return-to", options.returnTo ?? clientConfig.baseURL.pathname);
 
   const state = generateState();
   const nonce = generateNonce();
