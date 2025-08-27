@@ -46,7 +46,10 @@ Feature("Logout", () => {
     scopes: [ "profile", "email", "entitlements", "offline_access" ],
     customPostLogoutCallback(req, res) {
       if (req.query.post_logout_callback) {
-        res.redirect("/some-custom-redirect-path");
+        res.clearCookie("customClientCookie", {
+          domain: new URL(baseURL).hostname,
+          secure: true,
+        });
         customCallbackCalled = true;
       }
       return;
@@ -73,7 +76,8 @@ Feature("Logout", () => {
 
     When("user navigates to /id/logout", async () => {
       logoutResponse = await request(app).get("/id/logout?return-path=%2Ftest")
-        .set("Cookie", cookieString);
+        .set("Cookie", cookieString)
+        .set("Cookie", `customClientCookie=${encodeURIComponent(`j:${JSON.stringify({ value: "something", expiresIn: 600 })}`)}`);
     });
 
     Then("user is redirected to the OIDC provider for logout", () => {
@@ -129,20 +133,22 @@ Feature("Logout", () => {
       expect(parsedSetCookieHeader.bnoidclogout).to.be.a("null");
     });
 
-    When("OIDC provider redirects back to the callback endpoint", async () => {
+    When("OIDC provider redirects back to the callback endpoint with customLogoutCallback", async () => {
       customCallbackCalled = false;
       callbackResponse = await request(app)
         .get(`/id/logout/callback?return-path=%2Ftest&state=${state}&post_logout_callback=true`)
         .set("Cookie", cookies);
     });
 
-    Then("logout token is removed and user is redirected", () => {
+    Then("logout token and custom client cookie is removed and user is redirected", () => {
       expect(customCallbackCalled).to.be.true;
       expect(callbackResponse.status).to.equal(302);
-      expect(callbackResponse.header.location).to.equal("/some-custom-redirect-path");
+      expect(callbackResponse.header.location).to.equal("/test");
       parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
       expect(parsedSetCookieHeader).to.have.property("bnoidclogout");
+      expect(parsedSetCookieHeader).to.have.property("customClientCookie");
       expect(parsedSetCookieHeader.bnoidclogout).to.be.a("null");
+      expect(parsedSetCookieHeader.customClientCookie).to.be.a("null");
 
     });
   });

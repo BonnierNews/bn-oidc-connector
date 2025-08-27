@@ -38,6 +38,7 @@ Feature("Login", () => {
     .get("/oauth/jwks")
     .reply(200, jwks);
 
+  let customCallbackCalled = false;
   const app = createAppWithMiddleware({
     clientId,
     clientSecret,
@@ -46,7 +47,11 @@ Feature("Login", () => {
     scopes: [ "profile", "email", "entitlements", "offline_access" ],
     customPostLoginCallback: (req, res) => {
       if (req.query.some_parameter) {
-        res.redirect("/somewhere");
+        res.cookie("customClientCookie", { value: "something" }, {
+          domain: new URL(baseURL).hostname,
+          expires: new Date(Date.now() + 1000 * 60 * 15),
+        });
+        customCallbackCalled = true;
       }
       return;
     },
@@ -173,9 +178,16 @@ Feature("Login", () => {
       });
     });
 
-    And("authParams cookie is removed", () => {
+    And("authParams cookie is removed but custom client cookie persists", () => {
+      expect(customCallbackCalled).to.be.true;
       expect(parsedSetCookieHeader).to.have.property("bnoidcauthparams");
       expect(parsedSetCookieHeader.bnoidcauthparams).to.be.a("null");
+
+    });
+    And("custom client cookies are set", () => {
+      expect(parsedSetCookieHeader).to.have.property("customClientCookie");
+      expect(parsedSetCookieHeader.customClientCookie).to.exist;
+      expect(parsedSetCookieHeader.customClientCookie).to.include({ value: "something" });
     });
   });
 });

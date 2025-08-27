@@ -64,9 +64,7 @@ async function loginCallback(
     clientConfig.customPostLoginCallback(req, res);
   }
 
-  if (!res.headersSent) {
-    res.redirect(returnPath as string);
-  }
+  res.redirect(returnPath as string);
 }
 
 export { loginCallback };

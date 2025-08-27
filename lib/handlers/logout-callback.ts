@@ -24,9 +24,7 @@ function logoutCallback(
     clientConfig.customPostLogoutCallback(req, res);
   }
 
-  if (!res.headersSent) {
-    res.redirect(returnPath as string);
-  }
+  res.redirect(returnPath as string);
 }
 
 export { logoutCallback };
