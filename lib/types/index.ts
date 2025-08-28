@@ -24,8 +24,10 @@ type OidcClientConfig = {
   baseURL: URL;
   loginPath: string; // Path to the login endpoint, defaults to "/id/login"
   loginCallbackPath: string; // Path to the login callback endpoint, defaults to "/id/login/callback"
+  customPostLoginCallback?: (req: ExpressRequest, res: ExpressResponse) => void; // Custom login callback handler
   logoutPath: string; // Path to the logout endpoint, defaults to "/id/logout"
   logoutCallbackPath: string; // Path to the logout callback endpoint, defaults to "/id/logout/callback"
+  customPostLogoutCallback?: (req: ExpressRequest, res: ExpressResponse) => void; // Custom logout callback handler
   cookieDomainURL?: URL; // Domain where cookies should be set. TODO: Should this be forced?
   locale?: string; // Locale to override the OIDC provider app default locale
   scopes: string[]; // Scopes to request during login, defaults to ["openid", "profile", "email", "entitlements", "offline_access"]
