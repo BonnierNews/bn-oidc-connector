@@ -38,12 +38,23 @@ Feature("Login", () => {
     .get("/oauth/jwks")
     .reply(200, jwks);
 
+  let customCallbackCalled = false;
   const app = createAppWithMiddleware({
     clientId,
     clientSecret,
     issuerBaseURL: new URL(issuerBaseURL),
     baseURL: new URL(baseURL),
     scopes: [ "profile", "email", "entitlements", "offline_access" ],
+    customPostLoginCallback: (req, res) => {
+      if (req.query.some_parameter) {
+        res.cookie("customClientCookie", { value: "something" }, {
+          domain: new URL(baseURL).hostname,
+          expires: new Date(Date.now() + 1000 * 60 * 15),
+        });
+        customCallbackCalled = true;
+      }
+      return;
+    },
   });
 
   Scenario("Login is initiated by user clicking login button", () => {
@@ -150,7 +161,7 @@ Feature("Login", () => {
 
     When("OIDC provider redirects back to the callback endpoint", async () => {
       callbackResponse = await request(app)
-        .get(`/id/login/callback?code=test-auth-code&state=${state}`)
+        .get(`/id/login/callback?code=test-auth-code&state=${state}&some_parameter=true`)
         .set("Cookie", cookies);
     });
 
@@ -167,9 +178,16 @@ Feature("Login", () => {
       });
     });
 
-    And("authParams cookie is removed", () => {
+    And("authParams cookie is removed but custom client cookie persists", () => {
+      expect(customCallbackCalled).to.be.true;
       expect(parsedSetCookieHeader).to.have.property("bnoidcauthparams");
       expect(parsedSetCookieHeader.bnoidcauthparams).to.be.a("null");
+
+    });
+    And("custom client cookies are set", () => {
+      expect(parsedSetCookieHeader).to.have.property("customClientCookie");
+      expect(parsedSetCookieHeader.customClientCookie).to.exist;
+      expect(parsedSetCookieHeader.customClientCookie).to.include({ value: "something" });
     });
   });
 });
