@@ -17,7 +17,7 @@ function logout(
   const { clientConfig, wellKnownConfig } = req.oidc.config;
   const redirectUri = new URL(clientConfig.baseURL.toString());
   redirectUri.pathname = `${redirectUri.pathname.replace(/\/$/, "")}${clientConfig.logoutCallbackPath}`;
-  redirectUri.searchParams.set("return-path", options.returnPath ?? clientConfig.baseURL.pathname);
+  redirectUri.searchParams.set("return-to", options.returnTo ?? clientConfig.baseURL.pathname);
 
   const tokenSet = getTokensCookie(clientConfig, req);
   const state = generateState();

@@ -27,7 +27,7 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
         throw new Error("Failed to decode ID token after refresh");
       }
     } catch (error) {
-      res.oidc.login(req, res, { returnPath: req.originalUrl });
+      res.oidc.login(req, res, { returnTo: req.originalUrl });
 
       return;
     }
