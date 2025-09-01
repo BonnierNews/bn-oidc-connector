@@ -6,10 +6,10 @@ async function queryParams(req: Request, res: Response, next: NextFunction) {
   if (idlogin) {
     const searchParams = new URLSearchParams(queryParameters);
 
-    // TODO: Add support for login token
     res.oidc.login(req, res, {
       returnPath: searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path,
       prompts: idlogin === "silent" ? [ "none" ] : [],
+      token: queryParameters?.loginToken || queryParameters?.migrationToken,
     });
 
     return;
