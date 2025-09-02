@@ -190,4 +190,28 @@ Feature("Login", () => {
       expect(parsedSetCookieHeader.customClientCookie).to.include({ value: "something" });
     });
   });
+
+  Scenario("Login is initiated and user has a loginToken", () => {
+    let loginResponse: request.Response;
+
+    When("user requests the login endpoint with a loginToken", async () => {
+      loginResponse = await request(app).get("/some-path?loginToken=test-login-token");
+    });
+
+    Then("user is redirected to the OIDC provider for authentication with a 'token' parameter", () => {
+      expect(loginResponse.status).to.equal(302);
+      const redirectUri = new URL(loginResponse.header.location);
+      expect(redirectUri.toString()).to.include(`${issuerBaseURL}/oauth/authorize`);
+      const queryParams = Object.fromEntries(redirectUri.searchParams.entries());
+      expect(queryParams.client_id).to.equal("test-client-id");
+      expect(queryParams.response_type).to.equal("code");
+      expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/login/callback?return-path=%2Fsome-path`);
+      expect(queryParams.state).to.exist;
+      expect(queryParams.nonce).to.exist;
+      expect(queryParams.token).to.exist;
+      expect(queryParams.token).to.equal("test-login-token");
+    });
+
+  });
 });
