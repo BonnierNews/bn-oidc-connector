@@ -206,7 +206,7 @@ Feature("Login", () => {
       expect(queryParams.client_id).to.equal("test-client-id");
       expect(queryParams.response_type).to.equal("code");
       expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
-      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/login/callback?return-path=%2Fsome-path`);
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/login/callback?return-to=%2Fsome-path`);
       expect(queryParams.state).to.exist;
       expect(queryParams.nonce).to.exist;
       expect(queryParams.token).to.exist;
