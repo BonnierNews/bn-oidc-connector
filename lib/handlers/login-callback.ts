@@ -14,7 +14,7 @@ async function loginCallback(
   const { clientConfig, wellKnownConfig, signingKeys } = req.oidc.config;
   const { state: incomingState, code } = req.query as { state: string; code: string };
   const { state: storedState, codeVerifier } = req.cookies.bnoidcauthparams ?? {};
-  const returnPath: string = req.query["return-path"] as string ?? clientConfig.baseURL.pathname;
+  const returnTo: string = req.query["return-to"] as string ?? clientConfig.baseURL.pathname;
 
   try {
     if (incomingState !== storedState) {
@@ -23,7 +23,7 @@ async function loginCallback(
 
     const redirectUri = new URL(clientConfig.baseURL.toString());
     redirectUri.pathname = clientConfig.loginCallbackPath;
-    redirectUri.searchParams.set("return-path", returnPath);
+    redirectUri.searchParams.set("return-to", returnTo);
 
     const params : FetchTokensByAuthorizationCodeOptions = {
       tokenEndpoint: wellKnownConfig.token_endpoint,
@@ -64,7 +64,7 @@ async function loginCallback(
     clientConfig.customPostLoginCallback(req, res);
   }
 
-  res.redirect(returnPath as string);
+  res.redirect(returnTo);
 }
 
 export { loginCallback };

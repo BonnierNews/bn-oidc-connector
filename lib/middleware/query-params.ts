@@ -7,7 +7,7 @@ async function queryParams(req: Request, res: Response, next: NextFunction) {
     const searchParams = new URLSearchParams(queryParameters);
 
     res.oidc.login(req, res, {
-      returnPath: searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path,
+      returnTo: searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path,
       prompts: idlogin === "silent" ? [ "none" ] : [],
       token: loginToken || migrationToken,
     });

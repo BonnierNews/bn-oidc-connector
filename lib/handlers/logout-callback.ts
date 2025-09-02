@@ -12,11 +12,13 @@ function logoutCallback(
 
   unsetLogoutCookie(clientConfig, res);
 
-  let returnPath = req.query["return-path"] ?? "/";
+  let returnTo: string = req.query["return-to"] as string ?? "/";
 
   if (incomingState && incomingState !== storedState?.state) {
-    returnPath = "/";
-    res.redirect(returnPath as string);
+    returnTo = "/";
+
+    res.redirect(returnTo);
+
     return;
   }
 
@@ -24,7 +26,7 @@ function logoutCallback(
     clientConfig.customPostLogoutCallback(req, res);
   }
 
-  res.redirect(returnPath as string);
+  res.redirect(returnTo);
 }
 
 export { logoutCallback };
