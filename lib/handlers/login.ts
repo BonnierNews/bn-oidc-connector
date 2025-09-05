@@ -49,6 +49,10 @@ function login(
     params.set("ui_locales", options.locale);
   }
 
+  if (options.token) {
+    params.set("token", options.token);
+  }
+
   const authorizationUrl = new URL(wellKnownConfig.authorization_endpoint);
   authorizationUrl.search = params.toString();
 

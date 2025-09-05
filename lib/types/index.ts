@@ -6,6 +6,7 @@ type LoginOptions = {
   scopes?: string[];
   prompts?: string[];
   locale?: string;
+  token?: string;
 };
 
 type VerifyOptions = {
