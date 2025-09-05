@@ -47,14 +47,14 @@ Feature("is-entitled middleware", () => {
   });
 
   Scenario("Authenticated users with entitlements", () => {
-    const requiredEntitlents = [ "ent1" ];
-    const requiredEntitlents2 = [ "ent2" ];
+    const requiredEntitlements = [ "ent1" ];
+    const requiredEntitlements2 = [ "ent2" ];
 
     Given("we have a protected route", () => {
-      app.get("/protected-article", isEntitled(requiredEntitlents), (_, res) => {
+      app.get("/protected-article", isEntitled(requiredEntitlements), (_, res) => {
         return res.send(true);
       });
-      app.get("/protected-article2", isEntitled(requiredEntitlents2), (_, res) => {
+      app.get("/protected-article2", isEntitled(requiredEntitlements2), (_, res) => {
         return res.send(true);
       });
     });

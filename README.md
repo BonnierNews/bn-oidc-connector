@@ -25,7 +25,7 @@ npm install @bonniernews/bn-oidc-connector
 import { auth, isAuthenticated, isEntitled } from "@bonniernews/bn-oidc-connector";
 import express from "express";
 
-const app = express();;
+const app = express();
 
 // Initialize OIDC middleware
 app.use(auth({
