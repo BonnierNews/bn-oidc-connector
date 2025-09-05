@@ -195,7 +195,7 @@ Feature("Login", () => {
     let loginResponse: request.Response;
 
     When("user requests the login endpoint with a loginToken", async () => {
-      loginResponse = await request(app).get("/some-path?loginToken=test-login-token");
+      loginResponse = await request(app).get("/some-path?idlogintoken=test-login-token");
     });
 
     Then("user is redirected to the OIDC provider for authentication with a 'token' parameter", () => {

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 async function queryParams(req: Request, res: Response, next: NextFunction) {
-  const { idlogin, idrefresh, migrationToken, loginToken, ...queryParameters } = req.query as Record<string, string>;
+  const { idlogin, idrefresh, idlogintoken, ...queryParameters } = req.query as Record<string, string>;
 
   if (idlogin) {
     const searchParams = new URLSearchParams(queryParameters);
@@ -9,19 +9,19 @@ async function queryParams(req: Request, res: Response, next: NextFunction) {
     res.oidc.login(req, res, {
       returnTo: searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path,
       prompts: idlogin === "silent" ? [ "none" ] : [],
-      token: loginToken || migrationToken,
+      token: idlogintoken,
     });
 
     return;
   }
 
-  if (loginToken || migrationToken) {
+  if (idlogintoken) {
     const searchParams = new URLSearchParams(queryParameters);
 
     res.oidc.login(req, res, {
       returnTo: searchParams.size > 0 ? `${req.path}?${searchParams}` : req.path,
       prompts: [],
-      token: loginToken || migrationToken,
+      token: idlogintoken,
     });
 
     return;
