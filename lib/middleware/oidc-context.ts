@@ -23,7 +23,7 @@ function oidcContext(getConfig: () => OidcConfig) {
       idToken: tokens?.idToken,
       expiresIn: tokens?.expiresIn,
       isAuthenticated: false,
-      isEntitled: (request, validEntitlements) => isUserEntitled(request, validEntitlements),
+      isEntitled: (validEntitlements) => isUserEntitled(req, validEntitlements),
     };
 
     res.oidc = {

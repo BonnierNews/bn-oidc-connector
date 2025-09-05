@@ -7,7 +7,7 @@ import type { Request, Response, NextFunction } from "express";
 import { createAppWithMiddleware } from "../helpers/app-helper";
 import { generateIdToken } from "../helpers/id-token-helper";
 import { isEntitled } from "../../lib/middleware/is-entitled";
-import { UnauthorizedError } from "../../lib/errors";
+import { UnauthorizedError, UnauthenticatedError } from "../../lib/errors";
 
 const clientId = "test-client-id";
 const issuerBaseURL = "https://oidc.test";
@@ -46,15 +46,15 @@ Feature("is-entitled middleware", () => {
     scopes: [ "profile", "email", "entitlements", "offline_access" ],
   });
 
-  Scenario("Protected routes", () => {
-    const requiredEntitlents = [ "ent1" ];
-    const requiredEntitlents2 = [ "ent2" ];
+  Scenario("Authenticated users with entitlements", () => {
+    const requiredEntitlements = [ "ent1" ];
+    const requiredEntitlements2 = [ "ent2" ];
 
     Given("we have a protected route", () => {
-      app.get("/protected-article", isEntitled(requiredEntitlents), (_, res) => {
+      app.get("/protected-article", isEntitled(requiredEntitlements), (_, res) => {
         return res.send(true);
       });
-      app.get("/protected-article2", isEntitled(requiredEntitlents2), (_, res) => {
+      app.get("/protected-article2", isEntitled(requiredEntitlements2), (_, res) => {
         return res.send(true);
       });
     });
@@ -96,6 +96,36 @@ Feature("is-entitled middleware", () => {
 
     Then("we could NOT reach the article with required entitlements", () => {
       expect(protectedResult.status).to.eql(401);
+    });
+  });
+
+  Scenario("Unauthenticated users are rejected", () => {
+    Given("we have a protected admin route using isEntitled", () => {
+      app.get("/admin", isEntitled([ "admin" ]), (_, res) => {
+        return res.json({ message: "Admin area" });
+      });
+    });
+
+    And("we handle authentication and authorization errors", () => {
+      app.use((err: Error, _req: Request, res: Response, next: NextFunction) => {
+        if (err instanceof UnauthenticatedError) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+        if (err instanceof UnauthorizedError) {
+          return res.status(403).json({ error: "Not authorized" });
+        }
+        return next(err);
+      });
+    });
+
+    let result: request.Response;
+    When("an unauthenticated user tries to access the admin route", async () => {
+      result = await request(app).get("/admin");
+    });
+
+    Then("they receive a 401 Unauthenticated error", () => {
+      expect(result.status).to.eql(401);
+      expect(result.body.error).to.eql("Not authenticated");
     });
   });
 });

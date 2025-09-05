@@ -44,7 +44,7 @@ Feature("Logout", () => {
     issuerBaseURL: new URL(issuerBaseURL),
     baseURL: new URL(baseURL),
     scopes: [ "profile", "email", "entitlements", "offline_access" ],
-    customPostLogoutCallback(req, res) {
+    afterLogoutCallback(req, res) {
       if (req.query.post_logout_callback) {
         res.clearCookie("customClientCookie", {
           domain: new URL(baseURL).hostname,

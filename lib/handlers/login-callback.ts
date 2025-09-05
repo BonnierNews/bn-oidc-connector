@@ -60,8 +60,8 @@ async function loginCallback(
     unsetAuthParamsCookie(clientConfig, res);
   }
 
-  if (clientConfig.customPostLoginCallback) {
-    clientConfig.customPostLoginCallback(req, res);
+  if (clientConfig.afterLoginCallback) {
+    clientConfig.afterLoginCallback(req, res);
   }
 
   res.redirect(returnTo);

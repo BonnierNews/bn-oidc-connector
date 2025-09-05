@@ -9,15 +9,15 @@ describe("Claims", () => {
   req.oidc = {} as OidcRequestContext;
   req.oidc.idTokenClaims = { ent: [ "entitlement1" ] };
 
-  it("user has required entitlements", () => {
-    const requiredEntitlents = [ "entitlement1" ];
-    const isEntitled = isUserEntitled(req, requiredEntitlents);
+  it("User has required entitlements", () => {
+    const requiredEntitlements = [ "entitlement1" ];
+    const isEntitled = isUserEntitled(req, requiredEntitlements);
     expect(isEntitled).to.eql(true);
   });
 
-  it("user DONT have required entitlements", () => {
-    const requiredEntitlents = [ "entitlement2" ];
-    const isEntitled = isUserEntitled(req, requiredEntitlents);
+  it("User DOES NOT have required entitlements", () => {
+    const requiredEntitlements = [ "entitlement2" ];
+    const isEntitled = isUserEntitled(req, requiredEntitlements);
     expect(isEntitled).to.eql(false);
   });
 });

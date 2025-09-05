@@ -45,7 +45,7 @@ Feature("Login", () => {
     issuerBaseURL: new URL(issuerBaseURL),
     baseURL: new URL(baseURL),
     scopes: [ "profile", "email", "entitlements", "offline_access" ],
-    customPostLoginCallback: (req, res) => {
+    afterLoginCallback: (req, res) => {
       if (req.query.some_parameter) {
         res.cookie("customClientCookie", { value: "something" }, {
           domain: new URL(baseURL).hostname,
