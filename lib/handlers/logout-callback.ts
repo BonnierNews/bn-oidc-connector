@@ -22,8 +22,8 @@ function logoutCallback(
     return;
   }
 
-  if (clientConfig.customPostLogoutCallback) {
-    clientConfig.customPostLogoutCallback(req, res);
+  if (clientConfig.afterLogoutCallback) {
+    clientConfig.afterLogoutCallback(req, res);
   }
 
   res.redirect(returnTo);
