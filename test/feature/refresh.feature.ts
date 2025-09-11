@@ -43,13 +43,12 @@ Feature("Refresh", () => {
 
   Scenario("Refresh is initiated by a query parameter", () => {
     const idToken = generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "10m" });
-    const cookieValue = `j:${JSON.stringify({
-      accessToken: "test-access-token",
-      idToken,
-      refreshToken: "test-refresh-token",
-      expiresIn: 600,
-    })}`;
-    const cookieString = `bnoidctokens=${encodeURIComponent(cookieValue)}`;
+    const cookieString = Object.entries({
+      bnoidcat: "test-access-token",
+      bnoidcrt: "test-refresh-token",
+      bnoidcit: idToken,
+      bnoidcei: 600,
+    }).map(([ key, value ]) => `${key}=${value}`).join("; ");
     let refreshResponse: request.Response;
 
     Given("the OIDC provider can handle an OAuth token request", () => {
@@ -78,13 +77,12 @@ Feature("Refresh", () => {
 
   Scenario("Refresh is triggered by an expired ID token", () => {
     const idToken = generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "0m" });
-    const cookieValue = `j:${JSON.stringify({
-      accessToken: "test-access-token",
-      idToken,
-      refreshToken: "test-refresh-token",
-      expiresIn: 600,
-    })}`;
-    const cookieString = `bnoidctokens=${encodeURIComponent(cookieValue)}`;
+    const cookieString = Object.entries({
+      bnoidcat: "test-access-token",
+      bnoidcrt: "test-refresh-token",
+      bnoidcit: idToken,
+      bnoidcei: 600,
+    }).map(([ key, value ]) => `${key}=${value}`).join("; ");
     let somePathResponse: request.Response;
 
     Given("the OIDC provider can handle an OAuth token request", () => {

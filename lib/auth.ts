@@ -33,9 +33,14 @@ const defaultConfig: OidcClientConfig = {
   scopes: [ "openid", "entitlements", "offline_access" ],
   prompts: [], // TODO: Should we have any default prompts?
   cookies: {
-    authParams: "bnoidcauthparams",
-    tokens: "bnoidctokens",
-    logout: "bnoidclogout",
+    authParams: "bnoidcap",
+    tokens: {
+      access: "bnoidcat",
+      refresh: "bnoidcrt",
+      id: "bnoidcit",
+      expiresIn: "bnoidcei",
+    },
+    logout: "bnoidclo",
   },
 };
 
@@ -54,7 +59,12 @@ const configSchema = Joi.object({
   prompts: Joi.array().items(Joi.string()).optional(),
   cookies: Joi.object({
     authParams: Joi.string().optional(),
-    tokens: Joi.string().optional(),
+    tokens: Joi.object({
+      access: Joi.string().optional(),
+      refresh: Joi.string().optional(),
+      id: Joi.string().optional(),
+      expiresIn: Joi.string().optional(),
+    }).optional(),
     logout: Joi.string().optional(),
   }),
 }).required();

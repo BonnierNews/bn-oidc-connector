@@ -72,13 +72,13 @@ Feature("is-authenticated middleware", () => {
     });
 
     When("requesting a protected article as a logged in user", async () => {
-      const cookieValue = `j:${JSON.stringify({
-        accessToken: "test-access-token",
-        idToken,
-        refreshToken: "test-refresh-token",
-        expiresIn: 600,
-      })}`;
-      const cookieString = `bnoidctokens=${encodeURIComponent(cookieValue)}`;
+      const cookieString = Object.entries({
+        bnoidcat: "test-access-token",
+        bnoidcrt: "test-refresh-token",
+        bnoidcit: idToken,
+        bnoidcei: 600,
+      }).map(([ key, value ]) => `${key}=${value}`).join("; ");
+
       protectedResult = await request(app).get("/protected-article").set("Cookie", cookieString);
     });
 
