@@ -15,7 +15,7 @@ function verifyJwt(token: string, signingKeys: SigningKey[], options: VerifyOpti
       });
 
       return true;
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       // Do nothing, continue to the next key
     }
   }

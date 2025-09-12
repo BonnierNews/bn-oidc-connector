@@ -1,3 +1,0 @@
-{
-  "extends": ["@bonniernews/eslint-config/test"]
-}

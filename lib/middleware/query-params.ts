@@ -18,7 +18,7 @@ async function queryParams(req: Request, res: Response, next: NextFunction) {
   if (idrefresh) {
     try {
       await res.oidc.refresh(req, res);
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       // TODO: Should this be handled or just continue?
     }
 
