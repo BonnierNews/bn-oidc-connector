@@ -194,11 +194,11 @@ Feature("Login", () => {
   Scenario("Login is initiated and user has a loginToken", () => {
     let loginResponse: request.Response;
 
-    When("user requests the login endpoint with a loginToken", async () => {
-      loginResponse = await request(app).get("/some-path?idlogintoken=test-login-token");
+    When("user requests a URL with a loginToken AND a idlogin", async () => {
+      loginResponse = await request(app).get("/some-path?idlogintoken=test-login-token&idlogin=true");
     });
 
-    Then("user is redirected to the OIDC provider for authentication with a 'token' parameter", () => {
+    Then("user is redirected to the OIDC provider for authentication with a 'token' parameter and the idlogin qp is ignored", () => {
       expect(loginResponse.status).to.equal(302);
       const redirectUri = new URL(loginResponse.header.location);
       expect(redirectUri.toString()).to.include(`${issuerBaseURL}/oauth/authorize`);
