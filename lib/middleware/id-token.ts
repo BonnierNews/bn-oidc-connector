@@ -26,7 +26,7 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
       if (!decodedJwt) {
         throw new Error("Failed to decode ID token after refresh");
       }
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       res.oidc.login(req, res, { returnTo: req.originalUrl });
 
       return;
