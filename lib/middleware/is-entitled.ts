@@ -7,11 +7,15 @@ function isEntitled(validEntitlements: string[]) {
   return (req: Request, _res: Response, next: NextFunction) => {
     // Check if user is authenticated first
     if (!req.oidc.isAuthenticated) {
-      return next(new UnauthenticatedError("User is not logged in"));
+      next(new UnauthenticatedError("User is not logged in"));
+
+      return;
     }
 
     if (isUserEntitled(req, validEntitlements)) {
-      return next();
+      next();
+
+      return;
     }
 
     next(new UnauthorizedError(`User lacks required entitlements: ${validEntitlements.join(", ")}`));
