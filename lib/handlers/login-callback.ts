@@ -13,7 +13,7 @@ async function loginCallback(
 ): Promise<void> {
   const { clientConfig, wellKnownConfig, signingKeys } = req.oidc.config;
   const { state: incomingState, code } = req.query as { state: string; code: string };
-  const { state: storedState, codeVerifier } = req.cookies.bnoidcauthparams ?? {};
+  const { state: storedState, codeVerifier } = req.cookies[req.oidc.config.clientConfig.cookies.authParams] ?? {};
   const returnTo: string = req.query["return-to"] as string ?? clientConfig.baseURL.pathname;
 
   try {

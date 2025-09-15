@@ -106,17 +106,17 @@ Feature("Login", () => {
     Then("token cookie is set and user is redirected", () => {
       expect(callbackResponse.status).to.equal(302);
       parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
-      expect(parsedSetCookieHeader.bnoidctokens).to.exist;
-      expect(parsedSetCookieHeader.bnoidctokens).to.include({
-        accessToken: "test-access-token",
-        refreshToken: "test-refresh-token",
-        idToken,
+      expect(parsedSetCookieHeader).to.deep.equal({
+        bnoidcat: "test-access-token",
+        bnoidcrt: "test-refresh-token",
+        bnoidcit: idToken,
+        bnoidcei: "600",
+        bnoidcap: null,
       });
     });
 
     And("authParams cookie is removed", () => {
-      expect(parsedSetCookieHeader).to.have.property("bnoidcauthparams");
-      expect(parsedSetCookieHeader.bnoidcauthparams).to.be.a("null");
+      expect(parsedSetCookieHeader).to.include({ bnoidcap: null });
     });
   });
 
@@ -170,23 +170,23 @@ Feature("Login", () => {
     Then("token cookie is set and user is redirected", () => {
       expect(callbackResponse.status).to.equal(302);
       parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
-      expect(parsedSetCookieHeader.bnoidctokens).to.exist;
-      expect(parsedSetCookieHeader.bnoidctokens).to.include({
-        accessToken: "test-access-token",
-        refreshToken: "test-refresh-token",
-        idToken,
+      expect(parsedSetCookieHeader).to.deep.equal({
+        bnoidcat: "test-access-token",
+        bnoidcrt: "test-refresh-token",
+        bnoidcit: idToken,
+        bnoidcei: "600",
+        bnoidcap: null,
+        customClientCookie: { value: "something" },
       });
     });
 
     And("authParams cookie is removed but custom client cookie persists", () => {
       expect(customCallbackCalled).to.be.true;
-      expect(parsedSetCookieHeader).to.have.property("bnoidcauthparams");
-      expect(parsedSetCookieHeader.bnoidcauthparams).to.be.a("null");
-
+      expect(parsedSetCookieHeader).to.include({ bnoidcap: null });
     });
+
     And("custom client cookies are set", () => {
       expect(parsedSetCookieHeader).to.have.property("customClientCookie");
-      expect(parsedSetCookieHeader.customClientCookie).to.exist;
       expect(parsedSetCookieHeader.customClientCookie).to.include({ value: "something" });
     });
   });

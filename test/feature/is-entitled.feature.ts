@@ -70,14 +70,12 @@ Feature("is-entitled middleware", () => {
 
     let cookieString : string;
     And("user is logged in", () => {
-      const cookieValue = `j:${JSON.stringify({
-        accessToken: "test-access-token",
-        idToken,
-        refreshToken: "test-refresh-token",
-        expiresIn: 600,
-      })}`;
-      cookieString = `bnoidctokens=${encodeURIComponent(cookieValue)}`;
-
+      cookieString = Object.entries({
+        bnoidcat: "test-access-token",
+        bnoidcrt: "test-refresh-token",
+        bnoidcit: idToken,
+        bnoidcei: 600,
+      }).map(([ key, value ]) => `${key}=${value}`).join("; ");
     });
 
     let protectedResult : request.Response;

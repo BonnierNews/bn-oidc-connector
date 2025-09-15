@@ -70,11 +70,18 @@ app.listen(3000);
 
 ### Cookie Configuration
 
+The connector uses several cookies to manage authentication state and tokens. The default cookie names are:
+
 ```typescript
 cookies: {
-  authParams: "bnoidcauthparams",  // Cookie name for auth parameters
-  tokens: "bnoidctokens",          // Cookie name for tokens
-  logout: "bnoidclogout"           // Cookie name for logout state
+  authParams: "bnoidcap",   // Cookie name for auth parameters
+  tokens: {
+    access: "bnoidcat",     // Cookie name for access token
+    refresh: "bnoidcrt",    // Cookie name for refresh token
+    id: "bnoidcit",         // Cookie name for ID token
+    expiresIn: "bnoidcei"   // Cookie name for token expiry
+  },
+  logout: "bnoidclo"        // Cookie name for logout state
 }
 ```
 

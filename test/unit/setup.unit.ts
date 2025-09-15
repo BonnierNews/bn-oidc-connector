@@ -53,9 +53,14 @@ Feature("Setup", () => {
           scopes: [ "profile", "email", "entitlements", "offline_access" ],
           prompts: [],
           cookies: {
-            authParams: "bnoidcauthparams",
-            tokens: "bnoidctokens",
-            logout: "bnoidclogout",
+            authParams: "bnoidcap",
+            tokens: {
+              access: "bnoidcat",
+              refresh: "bnoidcrt",
+              id: "bnoidcit",
+              expiresIn: "bnoidcei",
+            },
+            logout: "bnoidclo",
           },
         });
       } catch (error) {

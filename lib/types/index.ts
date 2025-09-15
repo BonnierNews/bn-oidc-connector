@@ -35,7 +35,12 @@ type OidcClientConfig = {
   prompts: string[]; // Custom prompts to add to the login request
   cookies: {
     authParams: string,
-    tokens: string,
+    tokens: {
+      access: string,
+      refresh: string,
+      id: string,
+      expiresIn: string,
+    },
     logout: string,
   }
 };

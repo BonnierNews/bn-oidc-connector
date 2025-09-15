@@ -93,16 +93,21 @@ Feature("Logout", () => {
 
     And("logout cookie is set", () => {
       parsedSetCookieHeader = parseSetCookieHeader(logoutResponse.header["set-cookie"]);
-      expect(parsedSetCookieHeader.bnoidclogout).to.exist;
-      expect(parsedSetCookieHeader.bnoidclogout).to.have.property("state");
+      expect(parsedSetCookieHeader.bnoidclo).to.exist;
+      expect(parsedSetCookieHeader.bnoidclo).to.have.property("state");
 
       cookies = logoutResponse.header["set-cookie"];
-      state = parsedSetCookieHeader.bnoidclogout.state;
+      state = parsedSetCookieHeader.bnoidclo.state;
     });
 
-    And("the tokens cookie is unset", () => {
-      expect(parsedSetCookieHeader).to.have.property("bnoidctokens");
-      expect(parsedSetCookieHeader.bnoidctokens).to.be.a("null");
+    And("the token cookies are unset", () => {
+      expect(parsedSetCookieHeader).to.include({
+        bnoidcat: null,
+        bnoidcrt: null,
+        bnoidcit: null,
+        bnoidcei: null,
+        bnoidcap: null,
+      });
     });
 
     When("OIDC provider redirects back to the callback endpoint with incorrect state", async () => {
@@ -115,8 +120,7 @@ Feature("Logout", () => {
       expect(callbackResponse.status).to.equal(302);
       expect(callbackResponse.header.location).to.equal("/");
       parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
-      expect(parsedSetCookieHeader).to.have.property("bnoidclogout");
-      expect(parsedSetCookieHeader.bnoidclogout).to.be.a("null");
+      expect(parsedSetCookieHeader).to.include({ bnoidclo: null });
     });
 
     When("OIDC provider redirects back to the callback endpoint", async () => {
@@ -129,8 +133,7 @@ Feature("Logout", () => {
       expect(callbackResponse.status).to.equal(302);
       expect(callbackResponse.header.location).to.equal("/test");
       parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
-      expect(parsedSetCookieHeader).to.have.property("bnoidclogout");
-      expect(parsedSetCookieHeader.bnoidclogout).to.be.a("null");
+      expect(parsedSetCookieHeader).to.include({ bnoidclo: null });
     });
 
     When("OIDC provider redirects back to the callback endpoint with customLogoutCallback", async () => {
@@ -145,11 +148,10 @@ Feature("Logout", () => {
       expect(callbackResponse.status).to.equal(302);
       expect(callbackResponse.header.location).to.equal("/test");
       parsedSetCookieHeader = parseSetCookieHeader(callbackResponse.header["set-cookie"]);
-      expect(parsedSetCookieHeader).to.have.property("bnoidclogout");
-      expect(parsedSetCookieHeader).to.have.property("customClientCookie");
-      expect(parsedSetCookieHeader.bnoidclogout).to.be.a("null");
-      expect(parsedSetCookieHeader.customClientCookie).to.be.a("null");
-
+      expect(parsedSetCookieHeader).to.include({
+        bnoidclo: null,
+        customClientCookie: null,
+      });
     });
   });
 });
