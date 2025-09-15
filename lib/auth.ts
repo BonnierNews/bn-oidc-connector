@@ -55,6 +55,7 @@ const configSchema = Joi.object({
   logoutCallbackPath: Joi.string().pattern(/^\//).optional(),
   afterLogoutCallback: Joi.function().optional(),
   afterLoginCallback: Joi.function().optional(),
+  cookieDomainURL: Joi.object().instance(URL).optional(),
   scopes: Joi.array().items(Joi.string()).optional(),
   prompts: Joi.array().items(Joi.string()).optional(),
   cookies: Joi.object({
