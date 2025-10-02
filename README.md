@@ -99,9 +99,9 @@ scopes: [ "openid", "profile", "email", "entitlements", "offline_access" ]
 |-------|-------------|---------------|
 | `"openid"` | Basic OpenID Connect authentication | User ID (`sub` claim) |
 | `"profile"` | Access to user's profile information | Name (`given_name` and `family_name` claims) |
-| `"email"` | Access to user's email address | Email address and verification status (`email` and `email_verified` claims)|
+| `"email"` | Access to user's email address | Email address and verification status (`email` and `email_verified` claims) |
 | `"entitlements"` | Access to user's entitlements | User entitlements (`ent` claim) |
-| `"external_ids"` | Access to user's external ID's | External ID's for Didomi and Google Ads (`external_ids` claim) |
+| `"external_ids"` | Access to user's external IDs | External IDs for Didomi and Google Ads (`external_ids` claim) |
 | `"offline_access"` | Request refresh token for long-term access | Enables token refresh without re-authentication |
 
 **Important Notes:**
@@ -124,7 +124,7 @@ prompts: [ "login", "consent" ]  // Forces user to re-authenticate and consent
 |--------|-------------|
 | `"none"` | No user interaction. If authentication/consent is required, returns an error instead of prompting the user |
 | `"login"` | Forces the user to re-authenticate, even if they have an active session |
-| `"consent"` | Prompts the user to provide consent for the application's requested scopes again (note: this is currently in use) |
+| `"consent"` | Prompts the user to provide consent for the application's requested scopes again (note: this is currently not in use) |
 | `"select_account"` | Forces the user to confirm or switch accounts if already signed in.<br>**Note:** This is currently the only way to log in as a different user if you are already authenticated without requiring a full logout from the provider. |
 
 **Dynamic Prompts:**
