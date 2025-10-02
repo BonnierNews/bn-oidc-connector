@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import type { TokenSet } from "../types";
 import { InvalidStateError, InvalidIdTokenError } from "../errors";
-import { setTokensCookie, unsetAuthParamsCookie } from "../utils/cookies";
+import { setTokenCookies, unsetAuthParamsCookie } from "../utils/cookies";
 import { verifyJwt } from "../utils/jwt";
 import { fetchTokensByAuthorizationCode, FetchTokensByAuthorizationCodeOptions } from "../utils/tokens";
 
@@ -51,7 +51,7 @@ async function loginCallback(
       throw new InvalidIdTokenError("Failed to verify ID token");
     }
 
-    setTokensCookie(clientConfig, res, tokens);
+    setTokenCookies(clientConfig, res, tokens);
   } catch (error) {
     next(error);
 

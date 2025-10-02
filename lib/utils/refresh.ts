@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 
 import { RefreshRequestError } from "../errors";
-import { setTokensCookie } from "./cookies";
+import { setTokenCookies } from "./cookies";
 import { verifyJwt } from "./jwt";
 import { fetchTokensByRefreshToken, FetchTokensByRefreshTokenOptions } from "./tokens";
 
@@ -39,7 +39,7 @@ async function refreshTokens(
       throw new Error("Failed to verify ID token");
     }
 
-    setTokensCookie(clientConfig, res, tokens);
+    setTokenCookies(clientConfig, res, tokens);
 
     // Update the request context with new tokens
     req.oidc.accessToken = tokens.accessToken;

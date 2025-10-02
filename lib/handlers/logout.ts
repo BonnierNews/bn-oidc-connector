@@ -5,7 +5,7 @@ import {
   getTokensCookie,
   setLogoutCookie,
   unsetAuthParamsCookie,
-  unsetTokensCookie,
+  unsetTokenCookies,
 } from "../utils/cookies";
 import { generateState } from "../utils/crypto";
 
@@ -35,7 +35,7 @@ function logout(
   setLogoutCookie(clientConfig, res, { state });
 
   unsetAuthParamsCookie(clientConfig, res);
-  unsetTokensCookie(clientConfig, res);
+  unsetTokenCookies(clientConfig, res);
 
   const authorizationUrl = new URL(wellKnownConfig.end_session_endpoint);
   authorizationUrl.search = params.toString();
