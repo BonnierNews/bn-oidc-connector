@@ -32,7 +32,7 @@ function unsetAuthParamsCookie(
   });
 }
 
-function setTokensCookie(
+function setTokenCookies(
   { baseURL, cookieDomainURL, cookies }: OidcClientConfig,
   res: Response,
   tokens: TokenSet
@@ -43,12 +43,6 @@ function setTokensCookie(
     domain: cookieDomain.hostname,
     secure: cookieDomain.protocol === "https:",
     expires: new Date(Date.now() + 1000 * tokens.expiresIn),
-  });
-
-  setCookie(res, cookies.tokens.refresh, tokens.refreshToken, {
-    domain: cookieDomain.hostname,
-    secure: cookieDomain.protocol === "https:",
-    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
   });
 
   setCookie(res, cookies.tokens.id, tokens.idToken, {
@@ -62,9 +56,17 @@ function setTokensCookie(
     secure: cookieDomain.protocol === "https:",
     expires: new Date(Date.now() + 1000 * tokens.expiresIn),
   });
+
+  if (tokens.refreshToken) {
+    setCookie(res, cookies.tokens.refresh, tokens.refreshToken, {
+      domain: cookieDomain.hostname,
+      secure: cookieDomain.protocol === "https:",
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
+    });
+  }
 }
 
-function unsetTokensCookie(
+function unsetTokenCookies(
   { baseURL, cookieDomainURL, cookies }: OidcClientConfig,
   res: Response
 ): void {
@@ -166,8 +168,8 @@ export {
   getTokensCookie,
   setAuthParamsCookie,
   setLogoutCookie,
-  setTokensCookie,
+  setTokenCookies,
   unsetAuthParamsCookie,
   unsetLogoutCookie,
-  unsetTokensCookie,
+  unsetTokenCookies,
 };
