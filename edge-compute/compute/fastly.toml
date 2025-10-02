@@ -1,0 +1,101 @@
+# This file describes a Fastly Compute package. To learn more visit:
+# https://www.fastly.com/documentation/reference/compute/fastly-toml/
+
+name = "Auth at edge with OAuth 2.0"
+description = "Connect to an identity provider such as Google using OAuth 2.0 and validate authentication status at the Edge, to authorize access to your edge or origin hosted applications."
+authors = ["<devrel@fastly.com>"]
+language = "rust"
+manifest_version = 3
+
+[scripts]
+  build = "cargo build --profile release"
+
+[setup]
+
+  [setup.backends]
+
+    [setup.backends.origin]
+      description = "Content or application origin"
+      address = "echo.pt.bn.nr"
+
+    [setup.backends.idp]
+      description = "Identity provider authorization server"
+      address = "bn-login-id-service-lab.bnu.bn.nr"
+
+  [setup.secret_stores]
+
+    [setup.secret_stores.oauth_secrets]
+      description = "Store for authentication secrets"
+
+    [setup.secret_stores.oauth_secrets.entries]
+
+        [setup.secret_stores.oauth_secrets.entries.client_id]
+          description = "OAuth 2.0 client ID valid at the Identity Provider's authorization server."
+
+        [setup.secret_stores.oauth_secrets.entries.nonce_secret]
+          description = "A random secret to verify the OpenID nonce used to mitigate replay attacks."
+
+        # Optional client secret for certain IdPs' token endpoint.
+        # WARNING: Including this parameter produces NON-NORMATIVE OAuth 2.0 token requests.
+        # Comment out if not required.
+        [setup.secret_stores.oauth_secrets.entries.client_secret]
+          description = "[OPTIONAL] client_secret parameter for certain Identity Providers' (e.g., Google) token endpoint."
+
+  [setup.config_stores]
+
+    [setup.config_stores.oauth_config]
+      description = "Configuration metadata store"
+
+      [setup.config_stores.oauth_config.items]
+
+        [setup.config_stores.oauth_config.items.openid_configuration]
+          description = "OpenID Connect (OIDC) discovery document containing OAuth 2.0 endpoints. This is usually obtained from https://YOUR_AUTH_SERVER/.well-known/openid-configuration"
+          input_type = "string"
+
+        [setup.config_stores.oauth_config.items.jwks]
+          description = "JSON Web Key Set (JWKS) containing the public keys used to verify the JWT signature. You can find this at the jwks_uri endpoint in the OIDC discovery document."
+          input_type = "string"
+
+        [setup.config_stores.oauth_config.items.callback_path]
+          description = "Path for the redirection URI to which OAuth 2.0 responses will be sent."
+          value = "/callback"
+
+[local_server]
+
+  [local_server.backends]
+
+    [local_server.backends.idp]
+      url = "https://bn-login-id-service-lab.bnu.bn.nr"
+
+    [local_server.backends.origin]
+      url = "https://echo.pt.bn.nr"
+
+  [local_server.secret_stores]
+    [[local_server.secret_stores.oauth_secrets]]
+      key = "client_id"
+      file = ".secret.client_id"
+
+    [[local_server.secret_stores.oauth_secrets]]
+      key = "nonce_secret"
+      file = ".secret.nonce_secret"
+
+    # Optional client secret for certain IdPs' token endpoint.
+    # WARNING: Including this parameter produces NON-NORMATIVE OAuth 2.0 token requests.
+    # Comment out if not required.
+    [[local_server.secret_stores.oauth_secrets]]
+      key = "client_secret"
+      file = ".secret.client_secret"
+
+  [local_server.config_stores]
+
+    [local_server.config_stores.oauth_config]
+      format = "inline-toml"
+
+      [local_server.config_stores.oauth_config.contents]
+        openid_configuration = "{\"issuer\":\"https://bn-login-id-service-lab.bnu.bn.nr\",\"authorization_endpoint\":\"https://bn-login-id-service-lab.bnu.bn.nr/oauth/authorize\",\"token_endpoint\":\"https://bn-login-id-service-lab.bnu.bn.nr/oauth/token\",\"userinfo_endpoint\":\"https://bn-login-id-service-lab.bnu.bn.nr/oauth/userinfo\",\"end_session_endpoint\":\"https://bn-login-id-service-lab.bnu.bn.nr/oauth/logout\",\"jwks_uri\":\"https://bn-login-id-service-lab.bnu.bn.nr/oauth/jwks\",\"scopes_supported\":[\"openid\",\"profile\",\"email\",\"entitlements\",\"external_ids\",\"offline_access\",\"old_bnidtoken\"],\"response_types_supported\":[\"code\"],\"grant_types_supported\":[\"authorization_code\",\"refresh_token\"],\"subject_types_supported\":[\"public\"],\"id_token_signing_alg_values_supported\":[\"HS256\",\"RS256\"],\"ui_locales_supported\":[\"da-DK\",\"en-US\",\"fi-FI\",\"nl-NL\",\"nb-NO\",\"sv-SE\"]}"
+        jwks = "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"r7pZFUw9ZMYNduF64bprez4M4kEh1_GVP-Pb-cyOUlZaHeogK-BiT6NAeNCPscoLm52-IQVjLLcRbe5V_lFnW4QiCAoRYkaeOCnQ09GUIspkiEtGrxlrO5cw863yWim4JFry_BUSFNQ0x3tw1GcHKrw5l92J-Y9zOnbCioxae42yIjNtwnt5xzTA_ozLGUyU4t7GLodTpoUsn1xcrgNLxiQmHEHX3IzNmMsU3aKcQgfBY0jthbiXRdQO1goJO_HR2IuEYlEv-rJUsXEB50eyA1TBQAfz6ev5xFEItFeXQ_olGS4zUSkLTdv8PF7eNYIp9Mb9Yx4e7cIQELe12qNXEQ\",\"e\":\"AQAB\",\"kid\":\"something\"}]}"
+        callback_path = "/id/login/callback"
+        scope = '["openid", "entitlements", "offline_access"]'
+        introspect_access_token = "true"
+        jwt_access_token = "true"
+        code_challenge_method = '["HS256", "RS256"]'
