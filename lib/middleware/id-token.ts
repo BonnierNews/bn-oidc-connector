@@ -4,6 +4,15 @@ import type { OidcRequestContext } from "../types";
 import { decodeJwt } from "../utils/jwt";
 
 async function idToken(req: Request, res: Response, next: NextFunction) {
+  const { loginPath, logoutPath, loginCallbackPath, logoutCallbackPath } = req.oidc.config.clientConfig;
+
+  // Skip processing for auth routes
+  if ([ loginPath, logoutPath, loginCallbackPath, logoutCallbackPath ].includes(req.path)) {
+    next();
+
+    return;
+  }
+
   if (!req.oidc.idToken) {
     next();
 
@@ -17,6 +26,12 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
   let decodedJwt = decodeJwt(req.oidc.idToken, signingKeys, { issuer, audience });
 
   if (!decodedJwt) {
+    if (!req.oidc.refreshToken) {
+      res.oidc.login(req, res, { returnTo: req.originalUrl });
+
+      return;
+    }
+
     try {
       await res.oidc.refresh(req, res);
 
@@ -26,7 +41,7 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
       if (!decodedJwt) {
         throw new Error("Failed to decode ID token after refresh");
       }
-    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch {
       res.oidc.login(req, res, { returnTo: req.originalUrl });
 
       return;
