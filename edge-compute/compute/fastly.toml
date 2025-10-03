@@ -6,6 +6,7 @@ description = "Connect to an identity provider such as Google using OAuth 2.0 an
 authors = ["<devrel@fastly.com>"]
 language = "rust"
 manifest_version = 3
+service_id = "NJ8ATYR4fbsvQSzLcjIyGJ"
 
 [scripts]
   build = "cargo build --profile release"

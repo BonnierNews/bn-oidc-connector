@@ -144,7 +144,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
         // Modify the request before routing to the origin backend, e.g.:
         // Add an API key;
-        req.set_header("x-api-key", "h3ll0fr0mc0mpu73@3dg3");
+        req.set_header("zerotrust", "thekey");
         // Add a custom header containing the access token;
         req.set_header("fastly-access-token", *access_token);
         // Add a custom header containing the ID token;
