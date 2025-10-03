@@ -23,11 +23,11 @@ resource "fastly_configstore" "config_store" {
 resource "fastly_configstore_entries" "config_store_entries" {
   store_id = fastly_configstore.config_store.id
   entries = {
-    callback_path = "/id/login/callback",
-    scope = "[\"openid\", \"entitlements\", \"offline_access\"]",
-    code_challenge_method = "[\"HS256\", \"RS256\"]",
-    introspect_access_token = "true",
-    jwt_access_token = "true",
+    callback_path           = "/id/login/callback"
+    scope                   = "openid"
+    code_challenge_method   = "S256"
+    introspect_access_token = "false"
+    jwt_access_token        = "true"
   }
 }
 
@@ -64,13 +64,13 @@ resource "fastly_service_compute" "compute" {
 
   backend {
     name              = "idp"
-    address           = "bn-login-id-service-lab.bnu.bn.nr"
-    override_host     = "bn-login-id-service-lab.bnu.bn.nr"
+    address           = "bn-login-id-service-di-lab.bnu.bn.nr"
+    override_host     = "bn-login-id-service-di-lab.bnu.bn.nr"
     port              = 443
     use_ssl           = true
     ssl_check_cert    = true
-    ssl_cert_hostname = "bn-login-id-service-lab.bnu.bn.nr"
-    ssl_sni_hostname  = "bn-login-id-service-lab.bnu.bn.nr"
+    ssl_cert_hostname = "bn-login-id-service-di-lab.bnu.bn.nr"
+    ssl_sni_hostname  = "bn-login-id-service-di-lab.bnu.bn.nr"
   }
 
   dynamic "backend" {
