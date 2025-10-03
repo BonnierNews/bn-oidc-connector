@@ -30,7 +30,7 @@ pub struct OpenIdConfiguration {
 #[derive(Deserialize, Default)]
 pub struct JsonWebKey {
     #[serde(rename = "kid")]
-    pub key_id: String,
+    pub key_id: Option<String>,
     #[serde(rename = "e")]
     pub exponent: String,
     #[serde(rename = "n")]

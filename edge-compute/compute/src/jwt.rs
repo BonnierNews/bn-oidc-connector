@@ -19,25 +19,32 @@ pub fn validate_token_rs256<CustomClaims: Serialize + DeserializeOwned>(
     // Peek at the token metadata before verification and retrieve the key identifier,
     // in order to pick the right key out of the JWK set.
     let metadata = Token::decode_metadata(token_string)?;
-    let key_id = match metadata.key_id() {
-        None => {
-            return Err(Error::msg(
-                "Failed to decode public key identifier for token",
-            ))
+
+    let key_metadata = match metadata.key_id() {
+        Some(key_id) => {
+            // If kid is present, find matching key
+            settings
+                .jwks
+                .keys
+                .iter()
+                .find(|&k| k.key_id.as_deref() == Some(key_id))
+                .ok_or_else(|| Error::msg("No matching key found for key ID"))?
         }
-        Some(value) => value,
+        None => {
+            // If no kid, use the first key (assuming single key setup)
+            settings
+                .jwks
+                .keys
+                .first()
+                .ok_or_else(|| Error::msg("No keys available in JWKS"))?
+        }
     };
-    // Match the public key id for the JSON web key.
-    let key_metadata = settings
-        .jwks
-        .keys
-        .iter()
-        .find(|&k| k.key_id == key_id)
-        .unwrap();
+
     // Reconstruct the public key used to sign the token.
     let modulus = CUSTOM_ENGINE.decode(&key_metadata.modulus)?;
     let exponent = CUSTOM_ENGINE.decode(&key_metadata.exponent)?;
     let public_key = RS256PublicKey::from_components(&modulus, &exponent)?;
+
     // Verify the token's claims.
     // Custom claims are also supported – see https://docs.rs/jwt-simple/0.9.3/jwt_simple/index.html#custom-claims
     let verification_options = VerificationOptions {
