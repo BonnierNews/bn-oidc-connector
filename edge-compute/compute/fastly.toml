@@ -94,9 +94,9 @@ service_id = "NJ8ATYR4fbsvQSzLcjIyGJ"
 
       [local_server.config_stores.oauth_config.contents]
         openid_configuration = "{\"issuer\":\"https://bn-login-id-service-lab.bnu.bn.nr\",\"authorization_endpoint\":\"https://bn-login-id-service-lab.bnu.bn.nr/oauth/authorize\",\"token_endpoint\":\"https://bn-login-id-service-lab.bnu.bn.nr/oauth/token\",\"userinfo_endpoint\":\"https://bn-login-id-service-lab.bnu.bn.nr/oauth/userinfo\",\"end_session_endpoint\":\"https://bn-login-id-service-lab.bnu.bn.nr/oauth/logout\",\"jwks_uri\":\"https://bn-login-id-service-lab.bnu.bn.nr/oauth/jwks\",\"scopes_supported\":[\"openid\",\"profile\",\"email\",\"entitlements\",\"external_ids\",\"offline_access\",\"old_bnidtoken\"],\"response_types_supported\":[\"code\"],\"grant_types_supported\":[\"authorization_code\",\"refresh_token\"],\"subject_types_supported\":[\"public\"],\"id_token_signing_alg_values_supported\":[\"HS256\",\"RS256\"],\"ui_locales_supported\":[\"da-DK\",\"en-US\",\"fi-FI\",\"nl-NL\",\"nb-NO\",\"sv-SE\"]}"
-        jwks = "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"r7pZFUw9ZMYNduF64bprez4M4kEh1_GVP-Pb-cyOUlZaHeogK-BiT6NAeNCPscoLm52-IQVjLLcRbe5V_lFnW4QiCAoRYkaeOCnQ09GUIspkiEtGrxlrO5cw863yWim4JFry_BUSFNQ0x3tw1GcHKrw5l92J-Y9zOnbCioxae42yIjNtwnt5xzTA_ozLGUyU4t7GLodTpoUsn1xcrgNLxiQmHEHX3IzNmMsU3aKcQgfBY0jthbiXRdQO1goJO_HR2IuEYlEv-rJUsXEB50eyA1TBQAfz6ev5xFEItFeXQ_olGS4zUSkLTdv8PF7eNYIp9Mb9Yx4e7cIQELe12qNXEQ\",\"e\":\"AQAB\",\"kid\":\"something\"}]}"
+        jwks = "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"r7pZFUw9ZMYNduF64bprez4M4kEh1_GVP-Pb-cyOUlZaHeogK-BiT6NAeNCPscoLm52-IQVjLLcRbe5V_lFnW4QiCAoRYkaeOCnQ09GUIspkiEtGrxlrO5cw863yWim4JFry_BUSFNQ0x3tw1GcHKrw5l92J-Y9zOnbCioxae42yIjNtwnt5xzTA_ozLGUyU4t7GLodTpoUsn1xcrgNLxiQmHEHX3IzNmMsU3aKcQgfBY0jthbiXRdQO1goJO_HR2IuEYlEv-rJUsXEB50eyA1TBQAfz6ev5xFEItFeXQ_olGS4zUSkLTdv8PF7eNYIp9Mb9Yx4e7cIQELe12qNXEQ\",\"e\":\"AQAB\"}]}"
         callback_path = "/id/login/callback"
-        scope = '["openid", "entitlements", "offline_access"]'
+        scope = "openid"
         introspect_access_token = "true"
-        jwt_access_token = "true"
-        code_challenge_method = '["HS256", "RS256"]'
+        jwt_access_token = "false"
+        code_challenge_method = "S256"
