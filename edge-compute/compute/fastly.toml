@@ -66,10 +66,10 @@ service_id = "NJ8ATYR4fbsvQSzLcjIyGJ"
   [local_server.backends]
 
     [local_server.backends.idp]
-      url = "https://bn-login-id-service-lab.bnu.bn.nr"
+      url = "https://bn-login-id-service-di-lab.bnu.bn.nr"
 
     [local_server.backends.origin]
-      url = "https://echo.pt.bn.nr"
+      url = "https://flamingo-lab.di.se"
 
   [local_server.secret_stores]
     [[local_server.secret_stores.oauth_secrets]]
