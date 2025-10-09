@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import type { OidcRequestContext } from "../types";
 import { decodeJwt } from "../utils/jwt";
 
+// @todo This middleware should not be run for the login callback route!
 async function idToken(req: Request, res: Response, next: NextFunction) {
   if (!req.oidc.idToken) {
     next();
@@ -18,6 +19,7 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
 
   if (!decodedJwt) {
     try {
+      // @todo We have to check if a refresh token exists
       await res.oidc.refresh(req, res);
 
       // Decode the new ID token again after refresh
