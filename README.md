@@ -32,7 +32,7 @@ app.use(auth({
   clientId: "your-client-id",
   issuerBaseURL: new URL("https://bn-login-id-service-lab.bnu.bn.nr"),
   baseURL: new URL("https://your-app-domain.com"),
-  scopes: ["profile", "email", "entitlements", "offline_access"]
+  scopes: [ "profile", "email", "entitlements", "offline_access" ]
 }));
 
 // Protected route requiring authentication
@@ -83,6 +83,61 @@ cookies: {
   },
   logout: "bnoidclo"        // Cookie name for logout state
 }
+```
+
+### Scopes Configuration
+
+The `scopes` option determines what information and permissions your application requests from the OIDC provider. Scopes control access to user data and functionality.
+
+```typescript
+scopes: [ "openid", "profile", "email", "entitlements", "offline_access" ]
+```
+
+**Available Scopes:**
+
+| Scope | Description | Data Included |
+|-------|-------------|---------------|
+| `"openid"` | Basic OpenID Connect authentication | User ID (`sub` claim) |
+| `"profile"` | Access to user's profile information | Name (`given_name` and `family_name` claims) |
+| `"email"` | Access to user's email address | Email address and verification status (`email` and `email_verified` claims) |
+| `"entitlements"` | Access to user's entitlements | User entitlements (`ent` claim) |
+| `"external_ids"` | Access to user's external IDs | External IDs for Didomi and Google Ads (`external_ids` claim) |
+| `"offline_access"` | Request refresh token for long-term access | Enables token refresh without re-authentication |
+
+**Important Notes:**
+
+- You do not need to specify `"openid"` in your configuration; it will be included automatically
+- `"entitlements"` is needed if you plan to use `isEntitled()` middleware
+- `"offline_access"` is highly recommended for applications to enable automatic token refresh
+
+### Prompts Configuration
+
+The `prompts` option allows you to customize the authentication behavior by specifying OpenID Connect prompt parameters that control how the authorization server interacts with the user.
+
+```typescript
+prompts: [ "login", "consent" ]  // Forces user to re-authenticate and consent
+```
+
+**Available Prompts:**
+
+| Prompt | Description |
+|--------|-------------|
+| `"none"` | No user interaction. If authentication/consent is required, returns an error instead of prompting the user |
+| `"login"` | Forces the user to re-authenticate, even if they have an active session |
+| `"consent"` | Prompts the user to provide consent for the application's requested scopes again (note: this is currently not in use) |
+| `"select_account"` | Forces the user to confirm or switch accounts if already signed in.<br>**Note:** This is currently the only way to log in as a different user if you are already authenticated without requiring a full logout from the provider. |
+
+**Dynamic Prompts:**
+
+You can also specify prompts dynamically during login:
+
+```typescript
+app.get("/secure-login", (req, res) => {
+  res.oidc.login(req, res, {
+    prompts: [ "login" ],  // Override default prompts for this login
+    returnTo: "/sensitive-area"
+  });
+});
 ```
 
 ## Middleware
@@ -149,7 +204,7 @@ Checks if the authenticated user has specific entitlements. **Note: This middlew
 ```typescript
 import { isEntitled } from "@bonniernews/bn-oidc-connector";
 
-app.get("/admin", isEntitled(["admin", "super-user"]), (req, res) => {
+app.get("/admin", isEntitled([ "admin", "super-user" ]), (req, res) => {
   // User is guaranteed to be authenticated AND have at least one of the specified entitlements
   res.json({ message: "Admin access granted" });
 });
@@ -173,14 +228,14 @@ app.get("/admin", isEntitled(["admin", "super-user"]), (req, res) => {
 app.get("/profile", isAuthenticated, (req, res) => { ... });
 
 // ✅ Use isEntitled for routes that require specific permissions
-app.get("/admin", isEntitled(["admin"]), (req, res) => { ... });
+app.get("/admin", isEntitled([ "admin" ]), (req, res) => { ... });
 
 // ❌ Don't combine them - isEntitled already checks authentication
-app.get("/admin", isAuthenticated, isEntitled(["admin"]), (req, res) => { ... });
+app.get("/admin", isAuthenticated, isEntitled([ "admin" ]), (req, res) => { ... });
 
 // ✅ Use isAuthenticated when doing manual entitlement checks
 app.get("/dynamic", isAuthenticated, (req, res) => {
-  const hasAccess = req.oidc.isEntitled(["premium"]);
+  const hasAccess = req.oidc.isEntitled([ "premium" ]);
   // ... conditional logic
 });
 ```
@@ -223,7 +278,7 @@ Check if the current user has any of the specified entitlements.
 **Example:**
 ```typescript
 app.get("/content", isAuthenticated, (req, res) => {
-  if (req.oidc.isEntitled(["premium", "subscriber"])) {
+  if (req.oidc.isEntitled([ "premium", "subscriber" ])) {
     res.json({ content: "Premium content" });
   } else {
     res.json({ content: "Free content" });
@@ -270,7 +325,7 @@ type LogoutOptions = {
 app.get("/custom-login", (req, res) => {
   res.oidc.login(req, res, {
     returnTo: "/dashboard",
-    scopes: ["profile", "email"],
+    scopes: [ "profile", "email" ],
     locale: "sv-SE"
   });
 });
