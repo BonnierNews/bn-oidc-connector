@@ -212,6 +212,34 @@ Feature("Login", () => {
       expect(queryParams.token).to.exist;
       expect(queryParams.token).to.equal("test-login-token");
     });
+  });
 
+  Scenario("Login is initiated by an expired ID token", () => {
+    const expiredIdToken = generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "0m" });
+    const cookieString = Object.entries({
+      bnoidcat: "test-access-token",
+      bnoidcit: expiredIdToken,
+      bnoidcei: 600,
+    }).map(([ key, value ]) => `${key}=${value}`).join("; ");
+    let somePathResponse: request.Response;
+
+    When("client navigates to a URL with an expired ID token", async () => {
+      somePathResponse = await request(app)
+        .get("/random-path")
+        .set("Cookie", cookieString);
+    });
+
+    Then("user is redirected to the OIDC provider for authentication", () => {
+      expect(somePathResponse.status).to.equal(302);
+      const redirectUri = new URL(somePathResponse.header.location);
+      expect(redirectUri.toString()).to.include(`${issuerBaseURL}/oauth/authorize`);
+      const queryParams = Object.fromEntries(redirectUri.searchParams.entries());
+      expect(queryParams.client_id).to.equal("test-client-id");
+      expect(queryParams.response_type).to.equal("code");
+      expect(queryParams.scope).to.equal("openid profile email entitlements offline_access");
+      expect(queryParams.redirect_uri).to.equal(`${baseURL}/id/login/callback?return-to=%2Frandom-path`);
+      expect(queryParams.state).to.exist;
+      expect(queryParams.nonce).to.exist;
+    });
   });
 });
