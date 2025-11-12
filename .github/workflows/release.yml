@@ -54,5 +54,5 @@ jobs:
           npm install -g npm@latest
           npm ci
           npm publish --provenance --access public
-        # env:
-        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
