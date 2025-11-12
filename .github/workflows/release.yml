@@ -51,7 +51,8 @@ jobs:
       - name: Publish to NPM
         if: steps.check_version.outputs.version_tag
         run: |
+          npm install -g npm@latest
           npm ci
           npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # env:
+        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
