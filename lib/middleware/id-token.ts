@@ -37,8 +37,8 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
       // @todo We have to check if a refresh token exists
       await res.oidc.refresh(req, res);
 
-      // Decode the new ID token again after refresh
-      decodedJwt = decodeJwt(req.oidc.idToken, signingKeys, { issuer, audience });
+      // refreshTokens already verified the new ID token and attached its claims
+      decodedJwt = req.oidc.idTokenClaims;
 
       if (!decodedJwt) {
         throw new Error("Failed to decode ID token after refresh");
