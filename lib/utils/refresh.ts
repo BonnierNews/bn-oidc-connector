@@ -1,13 +1,15 @@
 import type { Request, Response } from "express";
 
 import { RefreshRequestError } from "../errors";
+import type { RefreshOptions } from "../types";
 import { setTokenCookies } from "./cookies";
 import { verifyJwt } from "./jwt";
 import { fetchTokensByRefreshToken, FetchTokensByRefreshTokenOptions } from "./tokens";
 
 async function refreshTokens(
   req: Request,
-  res: Response
+  res: Response,
+  options?: RefreshOptions
 ): Promise<void> {
   const { clientConfig, wellKnownConfig, signingKeys } = req.oidc.config;
 
@@ -26,6 +28,10 @@ async function refreshTokens(
 
     if (clientConfig.clientSecret) {
       params.clientSecret = clientConfig.clientSecret;
+    }
+
+    if (options?.bypassCache) {
+      params.bypassCache = true;
     }
 
     const tokens = await fetchTokensByRefreshToken(params);

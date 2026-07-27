@@ -298,7 +298,7 @@ The middleware adds an `oidc` property to the Express `Response` object with aut
 | `loginCallback` | `(req, res) => void` | Handles login callback |
 | `logout` | `(req, res, options?) => void` | Initiates logout flow |
 | `logoutCallback` | `(req, res) => void` | Handles logout callback |
-| `refresh` | `(req, res) => Promise<void>` | Refreshes tokens |
+| `refresh` | `(req, res, options?) => Promise<void>` | Refreshes tokens |
 
 ### Login Options
 
@@ -316,6 +316,14 @@ type LoginOptions = {
 ```typescript
 type LogoutOptions = {
   returnTo?: string;     // URL to redirect after logout
+}
+```
+
+### Refresh Options
+
+```typescript
+type RefreshOptions = {
+  bypassCache?: boolean; // Ask the OIDC provider to bypass its user/entitlements cache when issuing new tokens
 }
 ```
 
@@ -361,6 +369,16 @@ GET /some-page?idrefresh=true
 ```
 
 This is useful in scenarios where claims or entitlements may have changed during the user's session—such as after a purchase, subscription upgrade, or profile update—allowing the application to refresh tokens and retrieve updated user information without requiring the user to log in again.
+
+#### `idbypasscache`
+
+Used together with `idrefresh` to ask the OIDC provider to bypass its user/entitlements cache and fetch fresh data from its upstream sources when issuing the new tokens:
+
+```
+GET /some-page?idrefresh=true&idbypasscache=true
+```
+
+Without this parameter the provider may serve claims from its cache, so a plain refresh is not guaranteed to pick up upstream changes immediately. Use sparingly—bypassing the cache adds load on the provider's upstream services.
 
 ### Authentication Flow
 

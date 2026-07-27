@@ -31,7 +31,7 @@ function oidcContext(getConfig: () => OidcConfig) {
       loginCallback: (request, response) => loginCallback(request, response, next),
       logout: (request, response, options) => logout(request, response, options),
       logoutCallback: (request, response) => logoutCallback(request, response),
-      refresh: async (request, response) => await refreshTokens(request, response),
+      refresh: async (request, response, options) => await refreshTokens(request, response, options),
     };
 
     next();
