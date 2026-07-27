@@ -125,6 +125,48 @@ Feature("Refresh", () => {
     });
   });
 
+  Scenario("Request context reflects the refreshed claims on the same request", () => {
+    const oldIdToken = generateIdToken({ name: "John Doe", email: "old@example.com" }, { algorithm: "RS256", expiresIn: "10m" });
+    const newIdToken = generateIdToken({ name: "Jane Doe", email: "new@example.com" }, { algorithm: "RS256", expiresIn: "10m" });
+    const cookieString = Object.entries({
+      bnoidcat: "test-access-token",
+      bnoidcrt: "test-refresh-token",
+      bnoidcit: oldIdToken,
+      bnoidcei: 600,
+    }).map(([ key, value ]) => `${key}=${value}`).join("; ");
+    let contextResponse: request.Response;
+
+    Given("the OIDC provider can handle an OAuth token request", () => {
+      nock(issuerBaseURL)
+        .post("/oauth/token")
+        .reply(200, {
+          access_token: "new-test-access-token",
+          refresh_token: "new-test-refresh-token",
+          token_type: "Bearer",
+          expires_in: 600,
+          id_token: newIdToken,
+        });
+    });
+
+    And("there is an endpoint that echoes the request's OIDC context", () => {
+      app.get("/context-path", (req, res) => {
+        res.status(200).json({ claims: req.oidc.idTokenClaims, user: req.oidc.user });
+      });
+    });
+
+    When("client navigates to that endpoint with the idrefresh query parameter", async () => {
+      contextResponse = await request(app)
+        .get("/context-path?idrefresh=true")
+        .set("Cookie", cookieString);
+    });
+
+    Then("the response is built from the refreshed ID token's claims", () => {
+      expect(contextResponse.status).to.equal(200);
+      expect(contextResponse.body.claims.name).to.equal("Jane Doe");
+      expect(contextResponse.body.user.email).to.equal("new@example.com");
+    });
+  });
+
   Scenario("Refresh is triggered by an expired ID token", () => {
     const idToken = generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "0m" });
     const cookieString = Object.entries({

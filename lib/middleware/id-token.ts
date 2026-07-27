@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 
-import type { OidcRequestContext } from "../types";
+import { attachUserToContext } from "../utils/claims";
 import { decodeJwt } from "../utils/jwt";
 
 // @todo This middleware should not be run for the login callback route!
@@ -37,8 +37,8 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
       // @todo We have to check if a refresh token exists
       await res.oidc.refresh(req, res);
 
-      // Decode the new ID token again after refresh
-      decodedJwt = decodeJwt(req.oidc.idToken, signingKeys, { issuer, audience });
+      // refreshTokens already verified the new ID token and attached its claims
+      decodedJwt = req.oidc.idTokenClaims;
 
       if (!decodedJwt) {
         throw new Error("Failed to decode ID token after refresh");
@@ -56,15 +56,6 @@ async function idToken(req: Request, res: Response, next: NextFunction) {
   attachUserToContext(req, decodedJwt);
 
   next();
-}
-
-function attachUserToContext(req: Request, decodedJwt: Record<string, any>) {
-  const user: OidcRequestContext["user"] = {
-    id: decodedJwt.sub,
-    ...(decodedJwt.email && { email: decodedJwt.email }),
-  };
-
-  req.oidc.user = user;
 }
 
 export { idToken };
