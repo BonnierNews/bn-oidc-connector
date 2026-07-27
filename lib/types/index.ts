@@ -18,6 +18,10 @@ type LogoutOptions = {
   returnTo?: string;
 };
 
+type RefreshOptions = {
+  bypassCache?: boolean; // Ask the OIDC provider to bypass its user/entitlements cache when issuing new tokens
+};
+
 type OidcClientConfig = {
   clientId: string;
   clientSecret?: string;
@@ -96,7 +100,7 @@ type OidcResponseContext = {
   loginCallback: (req: ExpressRequest, res: ExpressResponse) => void;
   logout: (req: ExpressRequest, res: ExpressResponse, options?: LogoutOptions) => void;
   logoutCallback: (req: ExpressRequest, res: ExpressResponse) => void;
-  refresh: (req: ExpressRequest, res: ExpressResponse) => Promise<void>;
+  refresh: (req: ExpressRequest, res: ExpressResponse, options?: RefreshOptions) => Promise<void>;
 };
 
 declare module "express-serve-static-core" {
@@ -120,6 +124,7 @@ export type {
   OidcWellKnownConfig,
   OidcRequestContext,
   OidcResponseContext,
+  RefreshOptions,
   TokenSet,
   VerifyOptions,
 };

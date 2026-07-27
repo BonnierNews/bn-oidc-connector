@@ -50,10 +50,14 @@ Feature("Refresh", () => {
       bnoidcei: 600,
     }).map(([ key, value ]) => `${key}=${value}`).join("; ");
     let refreshResponse: request.Response;
+    let tokenRequestBody: string;
 
     Given("the OIDC provider can handle an OAuth token request", () => {
       nock(issuerBaseURL)
-        .post("/oauth/token")
+        .post("/oauth/token", (body) => {
+          tokenRequestBody = new URLSearchParams(body).toString();
+          return true;
+        })
         .reply(200, {
           access_token: "test-access-token",
           refresh_token: "test-refresh-token",
@@ -72,6 +76,52 @@ Feature("Refresh", () => {
     Then("token cookie is set", () => {
       expect(refreshResponse.status).to.equal(404);
       expect(refreshResponse.header["set-cookie"]).to.exist;
+    });
+
+    And("the token request does not ask the provider to bypass its cache", () => {
+      expect(tokenRequestBody).to.not.include("bypass_cache");
+    });
+  });
+
+  Scenario("Refresh with cache bypass is initiated by query parameters", () => {
+    const idToken = generateIdToken({ name: "John Doe" }, { algorithm: "RS256", expiresIn: "10m" });
+    const cookieString = Object.entries({
+      bnoidcat: "test-access-token",
+      bnoidcrt: "test-refresh-token",
+      bnoidcit: idToken,
+      bnoidcei: 600,
+    }).map(([ key, value ]) => `${key}=${value}`).join("; ");
+    let refreshResponse: request.Response;
+    let tokenRequestBody: string;
+
+    Given("the OIDC provider can handle an OAuth token request", () => {
+      nock(issuerBaseURL)
+        .post("/oauth/token", (body) => {
+          tokenRequestBody = new URLSearchParams(body).toString();
+          return true;
+        })
+        .reply(200, {
+          access_token: "test-access-token",
+          refresh_token: "test-refresh-token",
+          token_type: "Bearer",
+          expires_in: 600,
+          id_token: idToken,
+        });
+    });
+
+    When("client navigates to a URL with idrefresh and idbypasscache query parameters", async () => {
+      refreshResponse = await request(app)
+        .get("/some-path?idrefresh=true&idbypasscache=true")
+        .set("Cookie", cookieString);
+    });
+
+    Then("token cookie is set", () => {
+      expect(refreshResponse.status).to.equal(404);
+      expect(refreshResponse.header["set-cookie"]).to.exist;
+    });
+
+    And("the token request asks the provider to bypass its cache", () => {
+      expect(tokenRequestBody).to.include("bypass_cache=true");
     });
   });
 

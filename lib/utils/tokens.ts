@@ -15,6 +15,7 @@ type FetchTokensByRefreshTokenOptions = {
   clientId: string;
   refreshToken: string;
   clientSecret?: string;
+  bypassCache?: boolean;
 };
 
 type FetchTokenOptions = {
@@ -25,6 +26,7 @@ type FetchTokenOptions = {
   refresh_token?: string;
   code_verifier?: string;
   redirect_uri?: string;
+  bypass_cache?: string;
 };
 
 async function fetchTokensByAuthorizationCode(
@@ -59,6 +61,10 @@ async function fetchTokensByRefreshToken(
 
   if (options.clientSecret) {
     params.client_secret = options.clientSecret;
+  }
+
+  if (options.bypassCache) {
+    params.bypass_cache = "true";
   }
 
   return await fetchTokens(options.tokenEndpoint, params);
