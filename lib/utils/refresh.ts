@@ -4,7 +4,7 @@ import { RefreshRequestError } from "../errors";
 import type { RefreshOptions } from "../types";
 import { setTokenCookies } from "./cookies";
 import { verifyJwt } from "./jwt";
-import { fetchTokensByRefreshToken, FetchTokensByRefreshTokenOptions } from "./tokens";
+import { fetchTokensByRefreshToken, type FetchTokensByRefreshTokenOptions } from "./tokens";
 
 async function refreshTokens(
   req: Request,

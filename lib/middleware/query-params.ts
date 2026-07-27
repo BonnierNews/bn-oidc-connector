@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 async function queryParams(req: Request, res: Response, next: NextFunction) {
   const { idlogin, idrefresh, idlogintoken, idbypasscache, ...queryParameters } = req.query as Record<string, string>;
