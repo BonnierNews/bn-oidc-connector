@@ -1,0 +1,16 @@
+name: Test
+
+on:
+  pull_request:
+    paths:
+      - 'Cargo.toml'
+      - 'rust-toolchain.toml'
+      - '.cargo/config.toml'
+      - '.github/workflows/test.yml'
+      - 'src/**'
+
+jobs:
+  test:
+    uses: fastly/devex-reusable-workflows/.github/workflows/compute-starter-kit-rust-v2.yml@main
+    secrets:
+      gh_token: ${{ secrets.GITHUB_TOKEN}}
