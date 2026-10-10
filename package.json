@@ -121,7 +121,7 @@
     "@types/cookie-parser": "^1.4.8",
     "@types/express": "^5.0.0",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "@types/pem-jwk": "^2.0.2",
     "@types/supertest": "^6.0.3",
     "c8": "^10.1.3",
