@@ -1,6 +1,6 @@
 {
   "name": "@bonniernews/bn-oidc-connector",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "Express middleware for Bonnier News OIDC authentication",
   "type": "module",
   "main": "dist/index.js",
@@ -108,7 +108,7 @@
   "dependencies": {
     "cookie-parser": "^1.4.7",
     "express": "^5.0.0",
-    "joi": "^18.0.0",
+    "joi": "^18.3.0",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.2.0",
     "tsx": "^4.3.0"
